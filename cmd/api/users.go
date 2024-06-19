@@ -17,25 +17,42 @@ func (app *application) createUser(c *gin.Context) {
 		Name     string `bson:"name"`
 		Username string `bson:"username"`
 		Password string `bson:"password"`
+		RoleID   string `bson:"role_id"`
 	}
 
 	// Create a new User struct pointer to hold user information
-	user := &data.User{
-		Name:     input.Name,
-		Username: input.Username,
-	}
-
-	collection := app.config.db.mongoClient.Database("pos").Collection("user")
+	user := &data.User{}
 
 	// Bind the JSON body from the request to the `input` struct
-	if err := c.ShouldBindJSON(&user); err != nil {
+	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Transform the RoleID from string to ObjectID
+	roleObjectID, err := primitive.ObjectIDFromHex(input.RoleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+	}
+
+	// Verify if RoleID exists in the roles collection
+	rolesCollection := app.config.db.mongoClient.Database("pos").Collection("roles")
+	var role data.Role
+	err = rolesCollection.FindOne(context.TODO(), bson.M{"_id": roleObjectID}).Decode(&role)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Role not found"})
+		return
+	}
+
+	// Assign data from input to the user structure
+	user.Name = input.Name
+	user.Username = input.Username
+	user.RoleID = roleObjectID
+
 	// Check if a user with the same username already exists
+	collection := app.config.db.mongoClient.Database("pos").Collection("user")
 	var existingUser data.User
-	err := collection.FindOne(context.TODO(), bson.M{"username": user.Username}).Decode(&existingUser)
+	err = collection.FindOne(context.TODO(), bson.M{"username": user.Username}).Decode(&existingUser)
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 		return
@@ -72,7 +89,8 @@ func (app *application) updateUser(c *gin.Context) {
 	type updateUser struct {
 		Name     *string `bson:"name"`
 		Username *string `bson:"username"`
-		Password *string `bson:"password"` // Optional field for password update
+		Password *string `bson:"password"`
+		RoleID   *string `bson:"role_id"`
 	}
 
 	var updatedUser updateUser
@@ -110,13 +128,33 @@ func (app *application) updateUser(c *gin.Context) {
 		existingUser.Username = *updatedUser.Username
 	}
 
-	// Update password if provided (same logic as before)
+	// Update password if provided
 	if updatedUser.Password != nil {
 		err = existingUser.SetPassword(*updatedUser.Password)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
 			return
 		}
+	}
+
+	if updatedUser.RoleID != nil {
+		// Transform the RoleID from string to ObjectID
+		roleObjectID, err := primitive.ObjectIDFromHex(*updatedUser.RoleID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+			return
+		}
+
+		// Verify if RoleID exists in the roles collection
+		rolesCollection := app.config.db.mongoClient.Database("pos").Collection("roles")
+		var role data.Role
+		err = rolesCollection.FindOne(context.TODO(), bson.M{"_id": roleObjectID}).Decode(&role)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Role not found"})
+			return
+		}
+
+		existingUser.RoleID = roleObjectID
 	}
 
 	// Update the user document in the database
