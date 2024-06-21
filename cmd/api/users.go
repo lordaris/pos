@@ -74,7 +74,6 @@ func (app *application) createUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"id": result.InsertedID})
 }
 
-// TODO: Make the update of the roles work.
 func (app *application) updateUser(c *gin.Context) {
 	// Get the ID of the user to update from the request URL parameter
 	userID := c.Param("id")
@@ -90,8 +89,7 @@ func (app *application) updateUser(c *gin.Context) {
 	type updateUser struct {
 		Name     *string `bson:"name"`
 		Username *string `bson:"username"`
-		Password *string `bson:"password"`
-		RoleID   *string `bson:"role_id"`
+		Password *string `bson:"password"` // Optional field for password update
 	}
 
 	var updatedUser updateUser
@@ -99,6 +97,12 @@ func (app *application) updateUser(c *gin.Context) {
 	// Bind the JSON body from the request to the `updatedUser` struct
 	if err := c.ShouldBindJSON(&updatedUser); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check if at least one field is provided for update
+	if updatedUser.Name == nil && updatedUser.Username == nil && updatedUser.Password == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No fields provided for update"})
 		return
 	}
 
@@ -123,38 +127,12 @@ func (app *application) updateUser(c *gin.Context) {
 		existingUser.Username = *updatedUser.Username
 	}
 
-	// Update password if provided
 	if updatedUser.Password != nil {
 		err = existingUser.SetPassword(*updatedUser.Password)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
 			return
 		}
-	}
-
-	if updatedUser.RoleID != nil {
-		// Transform the RoleID from string to ObjectID
-		roleObjectID, err := primitive.ObjectIDFromHex(*updatedUser.RoleID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
-			return
-		}
-
-		// Verify if RoleID exists in the roles collection
-		rolesCollection := app.config.db.mongoClient.Database("pos").Collection("roles")
-		var role data.Role
-		err = rolesCollection.FindOne(context.TODO(), bson.M{"_id": roleObjectID}).Decode(&role)
-		if err != nil {
-			// Handle role not found error
-			if err == mongo.ErrNoDocuments {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Role not found"})
-				return
-			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		existingUser.RoleID = roleObjectID
 	}
 
 	// Update the user document in the database
@@ -168,9 +146,7 @@ func (app *application) updateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 }
 
-// Update only the user role
-func (app *application) updateUserRole(c *gin.Context){
-// Get the ID of the user to update from the request URL parameter
+func (app *application) updateUserRole(c *gin.Context) {
 	userID := c.Param("id")
 
 	// Convert the ID to an ObjectID
@@ -180,57 +156,54 @@ func (app *application) updateUserRole(c *gin.Context){
 		return
 	}
 
-	// Define a struct to hold the optional updated user data
-	type updateRole struct {
-		RoleID   *string `bson:"role_id"`
-	}
-
-	var updatedRole updateRole
-
-	// Bind the JSON body from the request to the `updatedUser` struct
-	if err := c.ShouldBindJSON(&updatedRole); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Get the existing user document from the database
-	collection := app.config.db.mongoClient.Database("pos").Collection("user")
+	userCollection := app.config.db.mongoClient.Database("pos").Collection("user")
 	var existingUser data.User
-	err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&existingUser)
+	err = userCollection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&existingUser)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	//   TODO: Update this to make it work as the categoryObjectID variable in api/products
+	//   The idea is not to use the variable as a string, as it can be used directly as Hex, and
+	//   use the Hex() method from mongoDB, as it returns the hex encoding of the ObjectID as a string
+	var updateRole struct {
+		RoleID string `json:"role_id"`
+	}
+
+	if err := c.BindJSON(&updateRole); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
-	if updatedRole.RoleID != nil {
-		// Transform the RoleID from string to ObjectID
-		roleObjectID, err := primitive.ObjectIDFromHex(*updatedRole.RoleID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+	roleObjectID, err := primitive.ObjectIDFromHex(updateRole.RoleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		return
+	}
+
+	roleCollection := app.config.db.mongoClient.Database("pos").Collection("roles")
+	var existingRole data.Role
+	err = roleCollection.FindOne(context.TODO(), bson.M{"_id": roleObjectID}).Decode(&existingRole)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
 			return
 		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-		// Verify if RoleID exists in the roles collection
-		rolesCollection := app.config.db.mongoClient.Database("pos").Collection("roles")
-		var role data.Role
-		err = rolesCollection.FindOne(context.TODO(), bson.M{"_id": roleObjectID}).Decode(&role)
-		if err != nil {
-			// Handle role not found error
-			if err == mongo.ErrNoDocuments {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Role not found"})
-				return
-			}
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, bson.M{"$set": bson.M{"role_id": roleObjectID}})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update"})
+		return
+	}
 
-		existingUser.RoleID = roleObjectID
-
-
+	c.JSON(http.StatusOK, gin.H{"message": "User role updated successfully"})
 }
 
 /*

@@ -6,37 +6,15 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Category struct {
-	ID            primitive.ObjectID `bson:"_id,omitempty"`
-	Name          string             `bson:"name"`
-	Subcategories []Subcategory      `bson:"subcategories"`
-}
-
-type Subcategory struct {
-	Name string `bson:"name"`
-}
-
-type Product struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name"`
-	Description string             `bson:"description"`
-	Price       float64            `bson:"price"`
-	Stock       int                `bson:"stock"`
-	MinStock    int                `bson:"min_stock"`
-	Barcode     string             `bson:"barcode"`
-	PLU         int                `bson:"plu"`
-	CategoryID  primitive.ObjectID `bson:"category_id"`
-	Promotion   Promotion          `bson:"promotion,omitempty"`
-}
-
 type Promotion struct {
-	Type               string    `bson:"type"`
-	DiscountPercentage float64   `bson:"discount_percentage,omitempty"`
-	DiscountPrice      float64   `bson:"discount_price,omitempty"`
-	BuyQuantity        int       `bson:"buy_quantity,omitempty"`
-	GetQuantity        int       `bson:"get_quantity,omitempty"`
-	StartDate          time.Time `bson:"start_date"`
-	EndDate            time.Time `bson:"end_date"`
+	ID                 primitive.ObjectID `bson:"_id,omitempty"`
+	Type               string             `bson:"type"`
+	DiscountPercentage float64            `bson:"discount_percentage,omitempty"`
+	DiscountPrice      float64            `bson:"discount_price,omitempty"`
+	BuyQuantity        int                `bson:"buy_quantity,omitempty"`
+	GetQuantity        int                `bson:"get_quantity,omitempty"`
+	StartDate          time.Time          `bson:"start_date"`
+	EndDate            time.Time          `bson:"end_date"`
 }
 
 type InventoryMovement struct {
