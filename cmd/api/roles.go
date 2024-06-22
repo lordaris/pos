@@ -11,28 +11,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func (app *application) defaultRoles(c *gin.Context) {
-	adminRole := data.Role{
-		Name:        "admin",
-		Permissions: []string{"all_permissions"},
-	}
-
-	managerRole := data.Role{
-		Name: "manager",
-		Permissions: []string{
-			"manage_users", "manage_inventory", "data_visualization", "management_reports",
-			"purchase_request_authorization", "inventory_transfer_authorization",
-		},
-	}
-
-	cashierRole := data.Role{
-		Name:        "cashier",
-		Permissions: []string{"pos"},
-	}
-
-	roles := []data.Role{adminRole, managerRole, cashierRole}
+func (app *application) createRoles(c *gin.Context) {
 	collection := app.config.db.mongoClient.Database("pos").Collection("roles")
 
+	var roles []data.Role
+
+	// Bind the JSON body from the request to the `roles` slice
+	if err := c.ShouldBindJSON(&roles); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Iterate over each role and perform upsert operation
 	for _, role := range roles {
 		filter := bson.M{"name": role.Name}
 		update := bson.M{
