@@ -10,7 +10,7 @@
 | DELETE | "/user/:id"      | deleteUser              | not started |
 | PUT    | "/user/:id/role" | updateUserRole          | in progress |
 | GET    | "/product/:id"   | getProduct              | not started |
-| POST   | "/product"       | createProduct           | not started |
+| POST   | "/product"       | createProduct           | in progress |
 | PUT    | "/product/:id"   | updateProduct           | not started |
 | DELETE | "/product/:id"   | deleteProduct           | not started |
 | GET    | "/category"      | getCategory             | not started |
@@ -37,6 +37,14 @@
 ## TODO
 
 - [ ] Create a function to create the default roles and update them from a JSON file. [^1]
+
+## Ideas
+
+- Use cache storing to store the products, and websockets to update it once the product list is modified:
+  1. When the app starts, make a request to the server to get the top selling products and store them in a local cache.
+  2. When searching the products, a product is not in the cache, get it from the server and store it.
+  3. Get updates in real time using websockets
+  4. Send the invoice to the server when the sale is done. If the server is not available, store it in a temporal file and send it once the server is available again and its reception is confirmed.
 
 ## Projects and documentation to learn from
 

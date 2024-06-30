@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lordaris/pos-api/cmd/internal/data"
@@ -14,10 +15,10 @@ import (
 func (app *application) createUser(c *gin.Context) {
 	// Define a struct to hold the data from the request body
 	var input struct {
-		Name     string `bson:"name"`
-		Username string `bson:"username"`
-		Password string `bson:"password"`
-		RoleID   string `bson:"role_id"`
+		Name     string `json:"name"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+		RoleID   string `json:"role_id"`
 	}
 
 	// Create a new User struct pointer to hold user information
@@ -32,7 +33,7 @@ func (app *application) createUser(c *gin.Context) {
 	// Transform the RoleID from string to ObjectID
 	roleObjectID, err := primitive.ObjectIDFromHex(input.RoleID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
 	// Verify if RoleID exists in the roles collection
@@ -48,6 +49,7 @@ func (app *application) createUser(c *gin.Context) {
 	user.Name = input.Name
 	user.Username = input.Username
 	user.RoleID = roleObjectID
+	user.Created = time.Now()
 
 	// Check if a user with the same username already exists
 	collection := app.config.db.mongoClient.Database("pos").Collection("user")
@@ -87,9 +89,9 @@ func (app *application) updateUser(c *gin.Context) {
 
 	// Define a struct to hold the optional updated user data
 	type updateUser struct {
-		Name     *string `bson:"name"`
-		Username *string `bson:"username"`
-		Password *string `bson:"password"` // Optional field for password update
+		Name     *string `json:"name"`
+		Username *string `json:"username"`
+		Password *string `json:"password"` // Optional field for password update
 	}
 
 	var updatedUser updateUser
@@ -228,24 +230,30 @@ func (app *application) getUsers(c *gin.Context) {
 	// Return users
 	c.JSON(http.StatusOK, users)
 }
+*/
 
-// TODO: Delete this handler as it was created only for educational purposes.
+func (app *application) getUser(c *gin.Context) {
+	userID := c.Param("id")
 
-// The implementation of our /user/{id} endpoint that returns a single user based on the provided ID
-func (app *application) getUserByID(c *gin.Context) {
-	// Get movie ID from URL
-	idStr := c.Param("id")
+	type userSearch struct {
+		Name     string             `bson:"name"`
+		Username string             `bson:"username"`
+		RoleID   primitive.ObjectID `bson:"role_id"`
+		Created  time.Time          `bson:"created"`
+	}
 
 	// Convert id string to ObjectId
-	id, err := primitive.ObjectIDFromHex(idStr)
+	id, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Find user by ObjectId
-	var user bson.M
-	err = app.config.db.mongoClient.Database("pos").Collection("user").FindOne(context.TODO(), bson.D{{"_id", id}}).Decode(&user)
+	var user userSearch
+	userCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+	filter := bson.D{{"_id", id}}
+	err = userCollection.FindOne(context.TODO(), filter).Decode(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -256,4 +264,3 @@ func (app *application) getUserByID(c *gin.Context) {
 }
 
 // TODO: Check for aggregations in mongodb atlas.
-*/

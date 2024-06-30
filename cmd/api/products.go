@@ -39,13 +39,14 @@ func (app *application) createProduct(c *gin.Context) {
 		return
 	}
 
-	// Check if the category exists in database
+	// Check if it's a valid CategoryID
 	categoryObjectID, err := primitive.ObjectIDFromHex(input.CategoryID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid category ID"})
 		return
 	}
 
+	// Check if the category exists in database
 	categoryCollection := app.config.db.mongoClient.Database("pos").Collection("categories")
 	var existingCategory data.Category
 	err = categoryCollection.FindOne(context.TODO(), bson.M{"_id": categoryObjectID}).Decode(&existingCategory)

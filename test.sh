@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Run sh test.sh to run the scripts
 create_product() {
 	echo "Creating a new product..."
@@ -14,6 +16,7 @@ create_product() {
             "plu": 12345,
             "category_id": "6675dceb834a3b2b5e254b65"
         }'
+	echo
 }
 
 create_category() {
@@ -23,6 +26,7 @@ create_category() {
 		-d '{
             "name": "Example Category"
         }'
+	echo
 }
 
 create_roles() {
@@ -46,15 +50,49 @@ create_roles() {
                 "permissions": ["pos"] 
             }
         ]'
-	echo "\n"
+	echo
 }
+
+create_user() {
+	echo "Creating a new user..."
+	curl -X POST http://localhost:8080/user \
+		-H "Content-Type: application/json" \
+		-d '{
+            "name": "'$2'",
+            "username": "'$3'",
+            "password": "'$4'",
+            "role_id": "'$5'"
+        }'
+	echo
+}
+
+search_user() {
+	if [ -z "$1" ]; then
+		echo "User ID is required"
+		echo "Usage: $0 search-user <user_id>"
+		exit 1
+	fi
+
+	echo "Searching user with ID: $1 ..."
+	curl -X GET http://localhost:8080/user/$1
+	echo
+}
+
 if [ "$1" = "create-product" ]; then
 	create_product
 elif [ "$1" = "create-category" ]; then
 	create_category
 elif [ "$1" = "create-roles" ]; then
 	create_roles
+elif [ "$1" = "create-user" ]; then
+	if [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ]; then
+		echo "Usage: $0 create-user <name> <username> <password> [role_id]"
+		exit 1
+	fi
+	create_user "$@"
+elif [ "$1" = "search-user" ]; then
+	search_user $2
 else
-	echo "Usage: $0 {create-product|create-category|create-roles}"
+	echo "Usage: $0 {create-product|create-category|create-roles|create-user <name> <username> <password> [role_id]|search-user <user_id>}"
 	exit 1
 fi
