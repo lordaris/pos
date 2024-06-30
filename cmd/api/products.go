@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/lordaris/pos-api/cmd/internal/data"
@@ -19,7 +20,7 @@ func (app *application) createProduct(c *gin.Context) {
 		Price       float64 `json:"price"`
 		Stock       int     `json:"stock"`
 		MinStock    int     `json:"min_stock"`
-		Barcode     string  `json:"barcode"`
+		Barcode     int     `json:"barcode"`
 		PLU         int     `json:"plu"`
 		CategoryID  string  `json:"category_id"`
 	}
@@ -79,4 +80,28 @@ func (app *application) createProduct(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"id": result.InsertedID})
+}
+
+func (app *application) productPromotion(c *gin.Context) {
+	type promotion struct {
+		Type               string    `bson:"type"`
+		DiscountPercentage float64   `bson:"discount_percentage,omitempty"`
+		DiscountPrice      float64   `bson:"discount_price,omitempty"`
+		BuyQuantity        int       `bson:"buy_quantity,omitempty"`
+		GetQuantity        int       `bson:"get_quantity,omitempty"`
+		StartDate          time.Time `bson:"start_date"`
+		EndDate            time.Time `bson:"end_date"`
+	}
+
+	// Get the product by PLU or barcode
+	var input struct {
+		Barcode int `json:"barcode"`
+		PLU     int `json:"plu"`
+	}
+
+	// Bind the JSON body from the request to the `input` struct
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 }
