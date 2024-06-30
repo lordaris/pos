@@ -169,9 +169,6 @@ func (app *application) updateUserRole(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	//   TODO: Update this to make it work as the categoryObjectID variable in api/products
-	//   The idea is not to use the variable as a string, as it can be used directly as Hex, and
-	//   use the Hex() method from mongoDB, as it returns the hex encoding of the ObjectID as a string
 	var updateRole struct {
 		RoleID string `json:"role_id"`
 	}
@@ -208,30 +205,6 @@ func (app *application) updateUserRole(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "User role updated successfully"})
 }
 
-/*
-// TODO: Delete this handler, as this is only for educational purposes.
-
-// Implemention of the /users route that returns all of the users from the user collection
-func (app *application) getUsers(c *gin.Context) {
-	// Find users
-	cursor, err := app.config.db.mongoClient.Database("pos").Collection("user").Find(context.TODO(), bson.D{{}})
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Map results
-	var users []bson.M
-	if err = cursor.All(context.TODO(), &users); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Return users
-	c.JSON(http.StatusOK, users)
-}
-*/
-
 func (app *application) getUser(c *gin.Context) {
 	userID := c.Param("id")
 
@@ -263,4 +236,43 @@ func (app *application) getUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// TODO: Check for aggregations in mongodb atlas.
+// Get all users with the same role.
+func (app *application) getUsersByRole(c *gin.Context) {
+	roleID := c.Param("role")
+
+	type usersSearch struct {
+		Name     string             `bson:"name"`
+		Username string             `bson:"username"`
+		RoleID   primitive.ObjectID `bson:"role_id"`
+		Created  time.Time          `bson:"created"`
+	}
+
+	// Convert role string into ObjectID
+	id, err := primitive.ObjectIDFromHex(roleID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role ID"})
+		return
+	}
+
+	userCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+	filter := bson.D{{"role_id", id}}
+
+	cursor, err := userCollection.Find(context.TODO(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	var results []usersSearch
+	if err = cursor.All(context.TODO(), &results); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(results) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No users found for the given role"})
+		return
+	}
+
+	c.JSON(http.StatusOK, results)
+}

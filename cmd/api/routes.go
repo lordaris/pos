@@ -12,6 +12,7 @@ func Router(r *gin.Engine, app *application) {
 	r.POST("/user", app.createUser)
 	r.PUT("/user/:id", app.updateUser)
 	r.PUT("/user/:id/role", app.updateUserRole)
+	r.GET("/users/:role", app.getUsersByRole)
 	r.POST("/product", app.createProduct)
 	r.POST("/category", app.createCategory)
 	r.GET("/user/:id", app.getUser)
