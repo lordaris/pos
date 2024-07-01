@@ -13,7 +13,6 @@ create_product() {
             "stock": 100,
             "min_stock": 10,
             "barcode": "1234567890123",
-            "plu": 12345,
             "category_id": "6675dceb834a3b2b5e254b65"
         }'
 	echo

@@ -20,4 +20,5 @@ func Router(r *gin.Engine, app *application) {
 	// Products and categories
 	r.POST("/product", app.createProduct)
 	r.POST("/category", app.createCategory)
+	r.POST("/promotion", app.productPromotion)
 }

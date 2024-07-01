@@ -9,10 +9,10 @@ import (
 type Promotion struct {
 	ID                 primitive.ObjectID `bson:"_id,omitempty"`
 	Type               string             `bson:"type"`
-	DiscountPercentage float64            `bson:"discount_percentage,omitempty"`
-	DiscountPrice      float64            `bson:"discount_price,omitempty"`
-	BuyQuantity        int                `bson:"buy_quantity,omitempty"`
-	GetQuantity        int                `bson:"get_quantity,omitempty"`
+	DiscountPercentage int                `bson:"discount_percentage"`
+	DiscountPrice      float64            `bson:"discount_price"`
+	BuyQuantity        int                `bson:"buy_quantity"`
+	GetQuantity        int                `bson:"get_quantity"`
 	StartDate          time.Time          `bson:"start_date"`
 	EndDate            time.Time          `bson:"end_date"`
 }
