@@ -1,8 +1,9 @@
 # POS
 
 1. create a .env file containing a variable called MONGODB_URI, and use your mongodb uri there.
-2. run `sh test.sh create-roles` to create default roles (you can modify this file to create or delete default roles)
-3. run `go run ./cmd/api`
+2. run `go run ./cmd/api` to start the server
+3. run `sh test.sh create-roles` to create default roles (you can modify this file to create or delete default roles)
+4. go to <http://localhost:8080> or
 
 ## Endpoints
 
