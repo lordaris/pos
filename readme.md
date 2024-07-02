@@ -1,5 +1,9 @@
 # POS
 
+1. create a .env file containing a variable called MONGODB_URI, and use your mongodb uri there.
+2. run `sh test.sh create-roles` to create default roles (you can modify this file to create or delete default roles)
+3. run `go run ./cmd/api`
+
 ## Endpoints
 
 | Method | URL pattern      | Handler                 | Status      |
@@ -49,6 +53,7 @@ To create a promotion, the user should select one of three types: `DiscountPrice
 - **DiscountPercentage:** This applies a percentage discount to the price of a product. When selected, the system should calculate the discounted price and use this as the product price instead of the regular price. It receives an int as a percentage
 - **DiscountPrice:** This sets a new fixed price for the product. If active, this price should be used instead of the regular price.
 - **BuyGet:** This promotion has two fields: the number of items the customer needs to buy (`BuyQuantity`) and the number of items the customer gets for free (`GetQuantity`). The system should detect the quantity of products bought and adjust the total price accordingly by discounting the price of the free products.
+- **StartDate** and **EndDate** should be sent as ISO 8601 (`2024-07-01t14:00:00Z`). That can be achieved using "toISOString()" method in the client.
 
 ---
 

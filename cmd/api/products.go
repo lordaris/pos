@@ -13,10 +13,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-// TODO: Implement the ability to store an array of offers within a product document.
-// These offers should not have overlapping date ranges, allowing to schedule various promotions in advance.
-// The point-of-sale (POS) system logic should account for this and only apply active offers during transactions.
+// TODO: The point-of-sale (POS) system logic should account for the existence of multiple offers with different dates and only apply active offers during transactions.
 // **Additionally, a mechanism should be implemented to automatically remove expired offers from the product document (TTL in mongodb or a Cron).**
+//
+// TODO: Refactor code to make it modular.
 
 func (app *application) createProduct(c *gin.Context) {
 	var input struct {
@@ -114,6 +114,18 @@ func (app *application) productPromotion(c *gin.Context) {
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
+	}
+
+	if input.StartDate.After(input.EndDate) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "StartDate should be less than EndDate"})
+		return
+	}
+
+	for _, promotion := range existingProduct.Promotions {
+		if input.StartDate.Before(promotion.EndDate) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "StartDate should start after any existing promotion EndDate"})
+			return
+		}
 	}
 
 	switch input.Type {
