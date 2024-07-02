@@ -16,7 +16,7 @@ import (
 // TODO: Implement the ability to store an array of offers within a product document.
 // These offers should not have overlapping date ranges, allowing to schedule various promotions in advance.
 // The point-of-sale (POS) system logic should account for this and only apply active offers during transactions.
-// **Additionally, a mechanism should be implemented to automatically remove expired offers from the product document.**
+// **Additionally, a mechanism should be implemented to automatically remove expired offers from the product document (TTL in mongodb or a Cron).**
 
 func (app *application) createProduct(c *gin.Context) {
 	var input struct {
@@ -87,33 +87,26 @@ func (app *application) createProduct(c *gin.Context) {
 }
 
 func (app *application) productPromotion(c *gin.Context) {
-	// TODO: Check how to handle the creation of the start date and end date
-	type promotion struct {
-		Type               string     `json:"type"`
-		DiscountPercentage *int       `json:"discount_percentage"`
-		DiscountPrice      *float64   `json:"discount_price"`
-		BuyQuantity        *int       `json:"buy_quantity"`
-		GetQuantity        *int       `json:"get_quantity"`
-		StartDate          *time.Time `json:"start_date"`
-		EndDate            *time.Time `json:"end_date"`
-	}
-
-	// Get the product by PLU or barcode
 	var input struct {
-		Barcode   int `json:"barcode"`
-		Promotion promotion
+		Barcode            int       `json:"barcode"`
+		Type               string    `json:"type"`
+		DiscountPercentage *int      `json:"discount_percentage"`
+		DiscountPrice      *float32  `json:"discount_price"`
+		BuyQuantity        *int      `json:buy_quantity`
+		GetQuantity        *int      `json:"get_quantity"`
+		StartDate          time.Time `json:"start_date"`
+		EndDate            time.Time `json:"end_date"`
 	}
 
-	// Bind the JSON body from the request to the `input` struct
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	productCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
 	filter := bson.D{{"barcode", input.Barcode}}
 	var existingProduct data.Product
-	err := productCollection.FindOne(context.TODO(), filter).Decode(&existingProduct)
+	err := productsCollection.FindOne(context.TODO(), filter).Decode(&existingProduct)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
@@ -123,40 +116,62 @@ func (app *application) productPromotion(c *gin.Context) {
 		return
 	}
 
-	switch input.Promotion.Type {
+	switch input.Type {
 	case "DiscountPercentage":
-		if input.Promotion.DiscountPercentage == nil || *input.Promotion.DiscountPercentage <= 0 {
+		if input.DiscountPercentage == nil || *input.DiscountPercentage <= 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "DiscountPercentage should be provided and greater than zero"})
 			return
-		} else if *input.Promotion.DiscountPercentage >= 100 {
+		} else if *input.DiscountPercentage >= 100 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "DiscountPercentage should be less than 100"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"DiscountPercentage": input.Promotion.DiscountPercentage})
+		c.JSON(http.StatusOK, gin.H{"DiscountPercentage": input.DiscountPercentage})
 	case "DiscountPrice":
-		if input.Promotion.DiscountPrice == nil || *input.Promotion.DiscountPrice == 0 {
+		if input.DiscountPrice == nil || *input.DiscountPrice == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "DiscountPrice should be provided and greater than 0"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"DiscountPrice": input.Promotion.DiscountPercentage})
+		c.JSON(http.StatusOK, gin.H{"DiscountPrice": input.DiscountPercentage})
 	case "BuyGet":
-		if input.Promotion.BuyQuantity == nil || *input.Promotion.BuyQuantity <= 0 || input.Promotion.GetQuantity == nil || *input.Promotion.GetQuantity <= 0 {
+		if input.BuyQuantity == nil || *input.BuyQuantity <= 0 || input.GetQuantity == nil || *input.GetQuantity <= 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "BuyQuantity and GetQuantity should be provided and greater than 0"})
 			return
 		}
-
 	default:
 		fmt.Println("You should select one of the next options: DiscountPercentage | DiscountPrice | BuyGet")
 	}
 
-	update := bson.D{{"$set", bson.D{
-		{"promotion", input.Promotion},
+	newPromotion := &data.Promotion{
+		ID:        primitive.NewObjectID(),
+		Type:      input.Type,
+		StartDate: input.StartDate,
+		EndDate:   input.EndDate,
+	}
+
+	if input.DiscountPercentage != nil {
+		newPromotion.DiscountPercentage = *input.DiscountPercentage
+	}
+
+	if input.DiscountPrice != nil {
+		newPromotion.DiscountPrice = *input.DiscountPrice
+	}
+
+	if input.BuyQuantity != nil {
+		newPromotion.BuyQuantity = *input.BuyQuantity
+	}
+
+	if input.GetQuantity != nil {
+		newPromotion.GetQuantity = *input.GetQuantity
+	}
+
+	update := bson.D{{"$push", bson.D{
+		{"promotions", newPromotion},
 	}}}
-	_, err = productCollection.UpdateOne(context.TODO(), filter, update)
+	_, err = productsCollection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product with promotion"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Promotion applied successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": newPromotion})
 }
