@@ -35,7 +35,7 @@
 | PUT    | "/customer/:id"  | updateCustomer          | Not started |
 | DELETE | "/customer/:id"  | deleteCustomer          | Not started |
 | GET    | "/invoice/:id"   | getInvoice              | Not started |
-| POST   | "/invoice"       | createInvoice           | Not started |
+| POST   | "/invoice"       | createInvoice           | In progress |
 | PUT    | "/invoice/:id"   | updateInvoice           | Not started |
 | DELETE | "/invoice/:id"   | deleteInvoice           | Not started |
 
