@@ -9,7 +9,7 @@
 
 | Method | URL pattern      | Handler                 | Status      |
 | ------ | ---------------- | ----------------------- | ----------- |
-| GET    | "/user/:id"      | getUser                 | Not started |
+| GET    | "/user/:id"      | getUser                 | In progress |
 | POST   | "/user"          | createUser              | In progress |
 | PUT    | "/user/:id"      | updateUser              | In progress |
 | DELETE | "/user/:id"      | deleteUser              | Not started |
@@ -23,7 +23,7 @@
 | PUT    | "/category/:id"  | updateCategory          | Not started |
 | DELETE | "/category/:id"  | deleteCategory          | Not started |
 | GET    | "/promotion/:id" | getPromotion            | Not started |
-| POST   | "/promotion"     | createPromotion         | Not started |
+| POST   | "/promotion"     | productPromotion        | Not started |
 | PUT    | "/promotion/:id" | updatePromotion         | Not started |
 | DELETE | "/promotion/:id" | deletePromotion         | Not started |
 | GET    | "/inventory/:id" | getInventoryMovement    | Not started |

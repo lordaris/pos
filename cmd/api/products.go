@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -75,6 +76,8 @@ func (app *application) createProduct(c *gin.Context) {
 		MinStock:    input.MinStock,
 		Barcode:     input.Barcode,
 		CategoryID:  categoryObjectID,
+		// send this field to initialize it as an empty array, because if it's null, a new offer cannot be created (as it should be an array and not null)
+		Promotions: []data.Promotion{},
 	}
 
 	// Insert the new user document into the user collection
@@ -92,7 +95,7 @@ func (app *application) productPromotion(c *gin.Context) {
 		Type               string    `json:"type"`
 		DiscountPercentage *int      `json:"discount_percentage"`
 		DiscountPrice      *float32  `json:"discount_price"`
-		BuyQuantity        *int      `json:buy_quantity`
+		BuyQuantity        *int      `json:"buy_quantity"`
 		GetQuantity        *int      `json:"get_quantity"`
 		StartDate          time.Time `json:"start_date"`
 		EndDate            time.Time `json:"end_date"`
@@ -129,6 +132,9 @@ func (app *application) productPromotion(c *gin.Context) {
 	}
 
 	switch input.Type {
+	case "":
+		c.JSON(http.StatusBadRequest, gin.H{"error": "type cannot be empty, it should contain DiscountPercentage | DiscountPrice | BuyGet"})
+		return
 	case "DiscountPercentage":
 		if input.DiscountPercentage == nil || *input.DiscountPercentage <= 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "DiscountPercentage should be provided and greater than zero"})
@@ -186,4 +192,27 @@ func (app *application) productPromotion(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": newPromotion})
+}
+
+func (app *application) getProduct(c *gin.Context) {
+	barcodeStr := c.Param("barcode")
+	barcode, err := strconv.Atoi(barcodeStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid barcode"})
+	}
+
+	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	filter := bson.D{{"barcode", barcode}}
+	var existingProduct data.Product
+	err = productsCollection.FindOne(context.TODO(), filter).Decode(&existingProduct)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"product": existingProduct})
 }

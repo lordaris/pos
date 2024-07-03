@@ -1,0 +1,35 @@
+package data
+
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
+
+type Invoice struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	TotalAmount float64            `bson:"total_amount"`
+	UserID      primitive.ObjectID `bson:"user_id"`
+	CustomerID  primitive.ObjectID `bson:"customer_id,omitempty"`
+	SaleDate    time.Time          `bson:"sale_date"`
+	ChangeGiven float64            `bson:"change_given"`
+	Discount    float64            `bson:"discount,omitempty"`
+	Items       []InvoiceItem      `bson:"items"`
+	Payments    []InvoicePayment   `bson:"payments"`
+}
+
+type InvoiceItem struct {
+	ProductID primitive.ObjectID `bson:"product_id"`
+	Quantity  int                `bson:"quantity"`
+	Price     float64            `bson:"price"`
+}
+
+type PaymentMethod struct {
+	ID   primitive.ObjectID `bson:"_id,omitempty"`
+	Name string             `bson:"name"`
+}
+
+type InvoicePayment struct {
+	PaymentMethodID primitive.ObjectID `bson:"payment_method_id"`
+	Amount          float64            `bson:"amount"`
+}
