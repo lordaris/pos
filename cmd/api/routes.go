@@ -22,6 +22,7 @@ func Router(r *gin.Engine, app *application) {
 	r.POST("/category", app.createCategory)
 	r.POST("/promotion", app.productPromotion)
 	r.GET("/product/:barcode", app.getProduct)
+	r.DELETE("/product/:barcode", app.deleteProduct)
 
 	// Invoices
 	r.POST("/invoice", app.createInvoice)

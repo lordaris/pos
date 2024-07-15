@@ -10,7 +10,9 @@ import (
 )
 
 func (app *application) createCategory(c *gin.Context) {
-	var input data.Category
+	var input struct {
+		Name string `json:"name"`
+	}
 
 	category := &data.Category{}
 

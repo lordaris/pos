@@ -7,37 +7,38 @@
 
 ## Endpoints
 
-| Method | URL pattern      | Handler                 | Status      |
-| ------ | ---------------- | ----------------------- | ----------- |
-| GET    | "/user/:id"      | getUser                 | In progress |
-| POST   | "/user"          | createUser              | In progress |
-| PUT    | "/user/:id"      | updateUser              | In progress |
-| DELETE | "/user/:id"      | deleteUser              | Not started |
-| PUT    | "/user/:id/role" | updateUserRole          | In progress |
-| GET    | "/product/:id"   | getProduct              | Not started |
-| POST   | "/product"       | createProduct           | In progress |
-| PUT    | "/product/:id"   | updateProduct           | Not started |
-| DELETE | "/product/:id"   | deleteProduct           | Not started |
-| GET    | "/category"      | getCategory             | Not started |
-| POST   | "/category"      | createCategory          | Not started |
-| PUT    | "/category/:id"  | updateCategory          | Not started |
-| DELETE | "/category/:id"  | deleteCategory          | Not started |
-| GET    | "/promotion/:id" | getPromotion            | Not started |
-| POST   | "/promotion"     | productPromotion        | Not started |
-| PUT    | "/promotion/:id" | updatePromotion         | Not started |
-| DELETE | "/promotion/:id" | deletePromotion         | Not started |
-| GET    | "/inventory/:id" | getInventoryMovement    | Not started |
-| POST   | "/inventory"     | createInventoryMovement | Not started |
-| PUT    | "/inventory/:id" | updateInventoryMovement | Not started |
-| DELETE | "/inventory/:id" | deleteInventoryMovement | Not started |
-| GET    | "/customer/:id"  | getCustomer             | Not started |
-| POST   | "/customer"      | createCustomer          | Not started |
-| PUT    | "/customer/:id"  | updateCustomer          | Not started |
-| DELETE | "/customer/:id"  | deleteCustomer          | Not started |
-| GET    | "/invoice/:id"   | getInvoice              | Not started |
-| POST   | "/invoice"       | createInvoice           | In progress |
-| PUT    | "/invoice/:id"   | updateInvoice           | Not started |
-| DELETE | "/invoice/:id"   | deleteInvoice           | Not started |
+| Method | URL pattern         | Handler                 | Status      |
+| ------ | ------------------- | ----------------------- | ----------- |
+| GET    | "/user/:id"         | getUser                 | In progress |
+| GET    | "/users/:role"      | getUsersByRole          | In progress |
+| POST   | "/user"             | createUser              | In progress |
+| PUT    | "/user/:id"         | updateUser              | In progress |
+| DELETE | "/user/:id"         | deleteUser              | Not started |
+| PUT    | "/user/:id/role"    | updateUserRole          | In progress |
+| GET    | "/product/:barcode" | getProduct              | Not started |
+| POST   | "/product"          | createProduct           | In progress |
+| PUT    | "/product/:barcode" | updateProduct           | Not started |
+| DELETE | "/product/:barcode" | deleteProduct           | Done        |
+| GET    | "/category"         | getCategory             | Not started |
+| POST   | "/category"         | createCategory          | Not started |
+| PUT    | "/category/:id"     | updateCategory          | Not started |
+| DELETE | "/category/:id"     | deleteCategory          | Not started |
+| GET    | "/promotion/:id"    | getPromotion            | Not started |
+| POST   | "/promotion"        | productPromotion        | Done        |
+| PUT    | "/promotion/:id"    | updatePromotion         | Not started |
+| DELETE | "/promotion/:id"    | deletePromotion         | Not started |
+| GET    | "/inventory/:id"    | getInventoryMovement    | Not started |
+| POST   | "/inventory"        | createInventoryMovement | Not started |
+| PUT    | "/inventory/:id"    | updateInventoryMovement | Not started |
+| DELETE | "/inventory/:id"    | deleteInventoryMovement | Not started |
+| GET    | "/customer/:id"     | getCustomer             | Not started |
+| POST   | "/customer"         | createCustomer          | Not started |
+| PUT    | "/customer/:id"     | updateCustomer          | Not started |
+| DELETE | "/customer/:id"     | deleteCustomer          | Not started |
+| GET    | "/invoice/:id"      | getInvoice              | Not started |
+| POST   | "/invoice"          | createInvoice           | In progress |
+| PUT    | "/invoice/:id"      | updateInvoice           | Not started |
+| DELETE | "/invoice/:id"      | deleteInvoice           | Not started |
 
 ## Ideas
 

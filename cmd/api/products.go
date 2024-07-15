@@ -42,7 +42,7 @@ func (app *application) createProduct(c *gin.Context) {
 	var existingBarcode data.Product
 	err := productsCollection.FindOne(context.TODO(), bson.M{"barcode": input.Barcode}).Decode(&existingBarcode)
 	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Barcode already exists"})
+		c.JSON(http.StatusConflict, gin.H{"error": "Barcode already exists", "product": existingBarcode.Name})
 		return
 	}
 
@@ -67,7 +67,6 @@ func (app *application) createProduct(c *gin.Context) {
 	}
 
 	product := &data.Product{
-		ID:          primitive.NewObjectID(),
 		Name:        input.Name,
 		Brand:       input.Brand,
 		Description: input.Description,
@@ -215,4 +214,28 @@ func (app *application) getProduct(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"product": existingProduct})
+}
+
+func (app *application) deleteProduct(c *gin.Context) {
+	barcodeStr := c.Param("barcode")
+	barcode, err := strconv.Atoi(barcodeStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	// Find user by ObjectId
+	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	filter := bson.D{{"barcode", barcode}}
+	result, err := productsCollection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Product not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
 }
