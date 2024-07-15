@@ -276,3 +276,27 @@ func (app *application) getUsersByRole(c *gin.Context) {
 
 	c.JSON(http.StatusOK, results)
 }
+
+func (app *application) deleteUser(c *gin.Context) {
+	userID := c.Param("id")
+
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	usersCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+	filter := bson.D{{"_id", id}}
+	result, err := usersCollection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "User not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
