@@ -13,7 +13,7 @@
 | GET    | "/users/:role"      | getUsersByRole          | In progress |
 | POST   | "/user"             | createUser              | In progress |
 | PUT    | "/user/:id"         | updateUser              | In progress |
-| DELETE | "/user/:id"         | deleteUser              | Not started |
+| DELETE | "/user/:id"         | deleteUser              | Done        |
 | PUT    | "/user/:id/role"    | updateUserRole          | In progress |
 | GET    | "/product/:barcode" | getProduct              | Not started |
 | POST   | "/product"          | createProduct           | In progress |
@@ -41,12 +41,6 @@
 | DELETE | "/invoice/:id"      | deleteInvoice           | Not started |
 
 ## Ideas
-
-- Use cache storage to store the products, and websockets to update it once the product list is modified:
-  1. When the app starts, make a request to the server to get the top-selling products and store them in a local cache.
-  2. When searching for products, if a product is not in the cache, retrieve it from the server and store it.
-  3. Get updates in real-time using websockets.
-  4. Send the invoice to the server when the sale is completed. If the server is not available, store it in a temporary file and send it once the server is available again and its reception is confirmed.
 
 ## API Documentation
 
