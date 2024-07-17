@@ -12,6 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // TODO: The point-of-sale (POS) system logic should account for the existence of multiple offers with different dates and only apply active offers during transactions.
@@ -223,7 +224,7 @@ func (app *application) deleteProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	// Find user by ObjectId
+	// Find product by Barcode
 	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
 	filter := bson.D{{"barcode", barcode}}
 	result, err := productsCollection.DeleteOne(context.TODO(), filter)
@@ -238,4 +239,96 @@ func (app *application) deleteProduct(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
+}
+
+func (app *application) updateProduct(c *gin.Context) {
+	barcodeStr := c.Param("barcode")
+	barcode, err := strconv.Atoi(barcodeStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	var input struct {
+		Name        *string  `json:"name"`
+		Brand       *string  `json:"brand"`
+		Description *string  `json:"description"`
+		Price       *float64 `json:"price"`
+		Stock       *int     `json:"stock"`
+		MinStock    *int     `json:"min_stock"`
+		Barcode     *int     `json:"barcode"`
+		CategoryID  *string  `json:"category_id"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+
+	var existingBarcode data.Product
+	err = productsCollection.FindOne(context.TODO(), bson.M{"barcode": input.Barcode}).Decode(&existingBarcode)
+	if err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Barcode already exists", "product": existingBarcode.Name})
+		return
+	}
+
+	var existingProduct data.Product
+	err = productsCollection.FindOne(context.TODO(), bson.M{"barcode": barcode}).Decode(&existingProduct)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	update := bson.M{}
+	if input.Name != nil {
+		update["name"] = *input.Name
+	}
+	if input.Brand != nil {
+		update["brand"] = *input.Brand
+	}
+	if input.Description != nil {
+		update["description"] = *input.Description
+	}
+	if input.Price != nil {
+		update["price"] = *input.Price
+	}
+	if input.Stock != nil {
+		update["stock"] = *input.Stock
+	}
+	if input.MinStock != nil {
+		update["min_stock"] = *input.MinStock
+	}
+	if input.Barcode != nil {
+		update["barcode"] = *input.Barcode
+	}
+	if input.CategoryID != nil {
+		update["category_id"] = *input.CategoryID
+	}
+
+	if len(update) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No valid fields to update"})
+		return
+	}
+
+	var updatedProduct data.Product
+	err = productsCollection.FindOneAndUpdate(
+		context.TODO(),
+		bson.M{"barcode": barcode},
+		bson.M{"$set": update},
+		options.FindOneAndUpdate().SetReturnDocument(options.After),
+	).Decode(&updatedProduct)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"product": updatedProduct})
 }

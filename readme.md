@@ -15,7 +15,7 @@
 | PUT    | "/user/:id"         | updateUser              | In progress |
 | DELETE | "/user/:id"         | deleteUser              | Done        |
 | PUT    | "/user/:id/role"    | updateUserRole          | In progress |
-| GET    | "/product/:barcode" | getProduct              | Not started |
+| GET    | "/product/:barcode" | getProduct              | Done        |
 | POST   | "/product"          | createProduct           | In progress |
 | PUT    | "/product/:barcode" | updateProduct           | Not started |
 | DELETE | "/product/:barcode" | deleteProduct           | Done        |

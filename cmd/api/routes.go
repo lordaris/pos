@@ -3,11 +3,11 @@ package main
 import "github.com/gin-gonic/gin"
 
 func Router(r *gin.Engine, app *application) {
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Hello world",
-		})
-	})
+	// r.GET("/", func(c *gin.Context) {
+	// 	c.JSON(200, gin.H{
+	// 		"message": "Hello world",
+	// 	})
+	// })
 
 	// Users and roles
 	r.POST("/user", app.createUser)
@@ -24,6 +24,7 @@ func Router(r *gin.Engine, app *application) {
 	r.POST("/promotion", app.productPromotion)
 	r.GET("/product/:barcode", app.getProduct)
 	r.DELETE("/product/:barcode", app.deleteProduct)
+	r.PUT("/product/:barcode", app.updateProduct)
 
 	// Invoices
 	r.POST("/invoice", app.createInvoice)
