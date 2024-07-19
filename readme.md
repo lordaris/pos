@@ -51,6 +51,9 @@ To create a promotion, the user should select one of three types: `DiscountPrice
 - **BuyGet:** This promotion has two fields: the number of items the customer needs to buy (`BuyQuantity`) and the number of items the customer gets for free (`GetQuantity`). The system should detect the quantity of products bought and adjust the total price accordingly by discounting the price of the free products.
 - **StartDate** and **EndDate** should be sent as ISO 8601 (`2024-07-01t14:00:00Z`). That can be achieved using "toISOString()" method in the client.
 
+TODO: Update this when the middleware is created
+The user update doesn't ask for the old password to modify the user nor its password, as it's intended to be used for administrators and not the actual user itself. It should be protected via middleware checking for the role permissions.
+
 ---
 
 test.sh have a method to create default roles. Modify it and run it to create new roles and its permissions.
