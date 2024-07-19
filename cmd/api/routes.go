@@ -17,7 +17,7 @@ func Router(r *gin.Engine, app *application) {
 	r.PUT("/user/:id/role", app.updateUserRole)
 	r.POST("/roles", app.createRoles)
 	r.DELETE("/user/:id", app.deleteUser)
-
+	r.POST("/tokens/authentication", app.createAuthenticationToken)
 	// Products and categories
 	r.POST("/product", app.createProduct)
 	r.POST("/category", app.createCategory)

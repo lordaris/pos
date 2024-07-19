@@ -35,7 +35,6 @@ func (app *application) createRoles(c *gin.Context) {
 		_, err := collection.UpdateOne(context.TODO(), filter, update, opts)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
-				// No document found, so let's insert a new role
 				_, err := collection.InsertOne(context.TODO(), role)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create role: " + role.Name})

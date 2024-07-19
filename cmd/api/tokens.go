@@ -41,9 +41,14 @@ func (app *application) createAuthenticationToken(c *gin.Context) {
 		return
 	}
 
+	// Create an empty array for the Token field if there are not any tokens.
+	if user.Tokens == nil {
+		user.Tokens = []data.Token{}
+	}
+
 	_, err = usersCollection.UpdateOne(context.TODO(), bson.M{"username": user.Username}, bson.M{"$push": bson.M{"tokens": token}})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store token"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
