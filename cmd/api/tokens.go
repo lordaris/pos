@@ -25,7 +25,7 @@ func (app *application) createAuthenticationToken(c *gin.Context) {
 	var user data.User
 	err := usersCollection.FindOne(context.TODO(), bson.M{"username": input.Username}).Decode(&user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user not found"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -35,22 +35,24 @@ func (app *application) createAuthenticationToken(c *gin.Context) {
 		return
 	}
 
-	token, err := data.GenerateToken(user.Username, time.Hour)
+	token, err := data.GenerateToken(input.Username, time.Hour)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Create an empty array for the Token field if there are not any tokens.
-	if user.Tokens == nil {
-		user.Tokens = []data.Token{}
-	}
-
-	_, err = usersCollection.UpdateOne(context.TODO(), bson.M{"username": user.Username}, bson.M{"$push": bson.M{"tokens": token}})
+	tokensCollection := app.config.db.mongoClient.Database("pos").Collection("tokens")
+	_, err = tokensCollection.InsertOne(context.TODO(), token)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"token": token})
+	_, err = usersCollection.UpdateOne(context.TODO(), bson.M{"username": user.Username}, bson.M{"$push": bson.M{"tokens": token.ID}})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"authentication_token": gin.H{"token": token.Plaintext, "expiry": token.Expiry}})
 }

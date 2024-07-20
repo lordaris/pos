@@ -45,20 +45,21 @@ func (app *application) createUser(c *gin.Context) {
 		return
 	}
 
+	// Check if a user with the same username already exists
+	collection := app.config.db.mongoClient.Database("pos").Collection("user")
+	var existingUser data.User
+	err = collection.FindOne(context.TODO(), bson.M{"username": input.Username}).Decode(&existingUser)
+	if err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
+		return
+	}
+
 	// Assign data from input to the user structure
 	user.Name = input.Name
 	user.Username = input.Username
 	user.RoleID = roleObjectID
 	user.Created = time.Now()
-
-	// Check if a user with the same username already exists
-	collection := app.config.db.mongoClient.Database("pos").Collection("user")
-	var existingUser data.User
-	err = collection.FindOne(context.TODO(), bson.M{"username": user.Username}).Decode(&existingUser)
-	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
-		return
-	}
+	user.Tokens = []primitive.ObjectID{}
 
 	// Set the user's password securely using the `SetPassword` method of the User struct (pointer)
 	err = user.SetPassword(input.Password)

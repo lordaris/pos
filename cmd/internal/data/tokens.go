@@ -4,18 +4,23 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base32"
+	"errors"
 	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Token struct {
-	Plaintext string    `bson:"token"`
-	Hash      []byte    `bson:"-"`
-	UserName  string    `bson:"-"`
-	Expiry    time.Time `bson:"expiry"`
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	Plaintext string             `bson:"token"`
+	Hash      []byte             `bson:"hash"`
+	UserName  string             `bson:"username"`
+	Expiry    time.Time          `bson:"expiry"`
 }
 
 func GenerateToken(userName string, ttl time.Duration) (*Token, error) {
 	token := &Token{
+		ID:       primitive.NewObjectID(),
 		UserName: userName,
 		Expiry:   time.Now().Add(ttl),
 	}
@@ -39,4 +44,14 @@ func GenerateToken(userName string, ttl time.Duration) (*Token, error) {
 	token.Hash = hash[:]
 
 	return token, nil
+}
+
+func ValidateTokenPlaintext(tokenPlaintext string) error {
+	if tokenPlaintext == "" {
+		return errors.New("token must be provided")
+	}
+	if len(tokenPlaintext) != 26 {
+		return errors.New("token must be 26 characters long")
+	}
+	return nil
 }

@@ -1,6 +1,10 @@
 package main
 
-import "github.com/gin-gonic/gin"
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
 
 func Router(r *gin.Engine, app *application) {
 	// r.GET("/", func(c *gin.Context) {
@@ -28,4 +32,11 @@ func Router(r *gin.Engine, app *application) {
 
 	// Invoices
 	r.POST("/invoice", app.createInvoice)
+
+	{
+		r.GET("/test", app.authenticate(), func(c *gin.Context) {
+			user := app.contextGetUser(c)
+			c.JSON(http.StatusOK, gin.H{"user": user})
+		})
+	}
 }

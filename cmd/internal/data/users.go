@@ -9,13 +9,13 @@ import (
 )
 
 type User struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty"`
-	Name           string             `bson:"name"`
-	Username       string             `bson:"username"`
-	HashedPassword []byte             `bson:"password"` // Store hashed password only
-	Created        time.Time          `bson:"created"`
-	RoleID         primitive.ObjectID `bson:"role_id"`
-	Tokens         []Token            `bson:"tokens"`
+	ID             primitive.ObjectID   `bson:"_id,omitempty"`
+	Name           string               `bson:"name"`
+	Username       string               `bson:"username"`
+	HashedPassword []byte               `bson:"password"` // Store hashed password only
+	Created        time.Time            `bson:"created"`
+	RoleID         primitive.ObjectID   `bson:"role_id"`
+	Tokens         []primitive.ObjectID `bson:"tokens"`
 }
 
 func (u *User) SetPassword(plaintextPassword string) error {
