@@ -33,6 +33,7 @@ func Router(r *gin.Engine, app *application) {
 	// Invoices
 	r.POST("/invoice", app.createInvoice)
 
+	// TODO: Delete route. Used for testing purposes only.
 	{
 		r.GET("/test", app.authenticate(), func(c *gin.Context) {
 			user := app.contextGetUser(c)
