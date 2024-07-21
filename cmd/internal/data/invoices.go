@@ -7,15 +7,16 @@ import (
 )
 
 type Invoice struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	TotalAmount float64            `bson:"total_amount"`
-	UserID      primitive.ObjectID `bson:"user_id"`
-	CustomerID  primitive.ObjectID `bson:"customer_id,omitempty"`
-	SaleDate    time.Time          `bson:"sale_date"`
-	ChangeGiven float64            `bson:"change_given"`
-	Discount    float64            `bson:"discount,omitempty"`
-	Items       []InvoiceItem      `bson:"items"`
-	Payments    []InvoicePayment   `bson:"payments"`
+	ID           primitive.ObjectID `bson:"_id,omitempty"`
+	TicketNumber int                `bson:"ticket_number"`
+	TotalAmount  float64            `bson:"total_amount"`
+	UserID       primitive.ObjectID `bson:"user_id"`
+	CustomerID   primitive.ObjectID `bson:"customer_id,omitempty"`
+	SaleDate     time.Time          `bson:"sale_date"`
+	ChangeGiven  float64            `bson:"change_given"`
+	Discount     float64            `bson:"discount,omitempty"`
+	Items        []InvoiceItem      `bson:"items"`
+	Payments     []InvoicePayment   `bson:"payments"`
 }
 
 type InvoiceItem struct {
