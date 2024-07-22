@@ -37,7 +37,7 @@ func (app *application) createUser(c *gin.Context) {
 	}
 
 	// Verify if RoleID exists in the roles collection
-	rolesCollection := app.config.db.mongoClient.Database("pos").Collection("roles")
+	rolesCollection := app.Collection(data.CollectionRole)
 	var role data.Role
 	err = rolesCollection.FindOne(context.TODO(), bson.M{"_id": roleObjectID}).Decode(&role)
 	if err != nil {
@@ -46,9 +46,9 @@ func (app *application) createUser(c *gin.Context) {
 	}
 
 	// Check if a user with the same username already exists
-	collection := app.config.db.mongoClient.Database("pos").Collection("user")
+	usersCollection := app.Collection(data.CollectionUser)
 	var existingUser data.User
-	err = collection.FindOne(context.TODO(), bson.M{"username": input.Username}).Decode(&existingUser)
+	err = usersCollection.FindOne(context.TODO(), bson.M{"username": input.Username}).Decode(&existingUser)
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 		return
@@ -69,7 +69,7 @@ func (app *application) createUser(c *gin.Context) {
 	}
 
 	// Insert the new user document into the user collection
-	result, err := collection.InsertOne(context.TODO(), user)
+	result, err := usersCollection.InsertOne(context.TODO(), user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 	}
@@ -110,9 +110,9 @@ func (app *application) updateUser(c *gin.Context) {
 	}
 
 	// Get the existing user document from the database
-	collection := app.config.db.mongoClient.Database("pos").Collection("user")
+	usersCollection := app.Collection(data.CollectionUser)
 	var existingUser data.User
-	err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&existingUser)
+	err = usersCollection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&existingUser)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -139,7 +139,7 @@ func (app *application) updateUser(c *gin.Context) {
 	}
 
 	// Update the user document in the database
-	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, bson.M{"$set": existingUser})
+	_, err = usersCollection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, bson.M{"$set": existingUser})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -159,9 +159,9 @@ func (app *application) updateUserRole(c *gin.Context) {
 		return
 	}
 
-	userCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+	usersCollection := app.Collection(data.CollectionUser)
 	var existingUser data.User
-	err = userCollection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&existingUser)
+	err = usersCollection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&existingUser)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -185,9 +185,9 @@ func (app *application) updateUserRole(c *gin.Context) {
 		return
 	}
 
-	roleCollection := app.config.db.mongoClient.Database("pos").Collection("roles")
+	rolesCollection := app.Collection(data.CollectionRole)
 	var existingRole data.Role
-	err = roleCollection.FindOne(context.TODO(), bson.M{"_id": roleObjectID}).Decode(&existingRole)
+	err = rolesCollection.FindOne(context.TODO(), bson.M{"_id": roleObjectID}).Decode(&existingRole)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Role not found"})
@@ -197,7 +197,7 @@ func (app *application) updateUserRole(c *gin.Context) {
 		return
 	}
 
-	_, err = userCollection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, bson.M{"$set": bson.M{"role_id": roleObjectID}})
+	_, err = usersCollection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, bson.M{"$set": bson.M{"role_id": roleObjectID}})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update"})
 		return
@@ -225,9 +225,9 @@ func (app *application) getUser(c *gin.Context) {
 
 	// Find user by ObjectId
 	var user userSearch
-	userCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+	usersCollection := app.Collection(data.CollectionUser)
 	filter := bson.D{{"_id", id}}
-	err = userCollection.FindOne(context.TODO(), filter).Decode(&user)
+	err = usersCollection.FindOne(context.TODO(), filter).Decode(&user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -255,10 +255,10 @@ func (app *application) getUsersByRole(c *gin.Context) {
 		return
 	}
 
-	userCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+	usersCollection := app.Collection(data.CollectionUser)
 	filter := bson.D{{"role_id", id}}
 
-	cursor, err := userCollection.Find(context.TODO(), filter)
+	cursor, err := usersCollection.Find(context.TODO(), filter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -286,7 +286,7 @@ func (app *application) deleteUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	usersCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+	usersCollection := app.Collection(data.CollectionUser)
 	filter := bson.D{{"_id", id}}
 	result, err := usersCollection.DeleteOne(context.TODO(), filter)
 	if err != nil {

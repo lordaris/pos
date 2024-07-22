@@ -39,7 +39,7 @@ func (app *application) createProduct(c *gin.Context) {
 	}
 
 	// Check if a product with the same barcode exists
-	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	productsCollection := app.Collection(data.CollectionProduct)
 	var existingBarcode data.Product
 	err := productsCollection.FindOne(context.TODO(), bson.M{"barcode": input.Barcode}).Decode(&existingBarcode)
 	if err == nil {
@@ -55,7 +55,7 @@ func (app *application) createProduct(c *gin.Context) {
 	}
 
 	// Check if the category exists in database
-	categoryCollection := app.config.db.mongoClient.Database("pos").Collection("categories")
+	categoryCollection := app.Collection(data.CollectionCategory)
 	var existingCategory data.Category
 	err = categoryCollection.FindOne(context.TODO(), bson.M{"_id": categoryObjectID}).Decode(&existingCategory)
 	if err != nil {
@@ -106,7 +106,7 @@ func (app *application) productPromotion(c *gin.Context) {
 		return
 	}
 
-	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	productsCollection := app.Collection(data.CollectionProduct)
 	filter := bson.D{{"barcode", input.Barcode}}
 	var existingProduct data.Product
 	err := productsCollection.FindOne(context.TODO(), filter).Decode(&existingProduct)
@@ -201,7 +201,7 @@ func (app *application) getProduct(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid barcode"})
 	}
 
-	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	productsCollection := app.Collection(data.CollectionProduct)
 	filter := bson.D{{"barcode", barcode}}
 	var existingProduct data.Product
 	err = productsCollection.FindOne(context.TODO(), filter).Decode(&existingProduct)
@@ -225,7 +225,7 @@ func (app *application) deleteProduct(c *gin.Context) {
 	}
 
 	// Find product by Barcode
-	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	productsCollection := app.Collection(data.CollectionProduct)
 	filter := bson.D{{"barcode", barcode}}
 	result, err := productsCollection.DeleteOne(context.TODO(), filter)
 	if err != nil {
@@ -263,7 +263,7 @@ func (app *application) updateProduct(c *gin.Context) {
 		return
 	}
 
-	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	productsCollection := app.Collection(data.CollectionProduct)
 
 	var existingBarcode data.Product
 	err = productsCollection.FindOne(context.TODO(), bson.M{"barcode": input.Barcode}).Decode(&existingBarcode)

@@ -2,6 +2,10 @@ package data
 
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
+const (
+	CollectionProduct = "products"
+)
+
 type Product struct {
 	ID          primitive.ObjectID `bson:"_id,omitempty"`
 	Name        string             `bson:"name"`

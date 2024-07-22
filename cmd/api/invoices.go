@@ -29,8 +29,8 @@ func (app *application) createInvoice(c *gin.Context) {
 		return
 	}
 
-	invoiceCollection := app.config.db.mongoClient.Database("pos").Collection("invoices")
-	productsCollection := app.config.db.mongoClient.Database("pos").Collection("products")
+	invoiceCollection := app.Collection(data.CollectionInvoice)
+	productsCollection := app.Collection(data.CollectionProduct)
 
 	session, err := app.config.db.mongoClient.StartSession()
 	if err != nil {

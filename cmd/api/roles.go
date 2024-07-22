@@ -12,8 +12,7 @@ import (
 )
 
 func (app *application) createRoles(c *gin.Context) {
-	collection := app.config.db.mongoClient.Database("pos").Collection("roles")
-
+	rolesCollection := app.Collection(data.CollectionRole)
 	var roles []data.Role
 
 	// Bind the JSON body from the request to the `roles` slice
@@ -32,10 +31,10 @@ func (app *application) createRoles(c *gin.Context) {
 		}
 
 		opts := options.Update().SetUpsert(true)
-		_, err := collection.UpdateOne(context.TODO(), filter, update, opts)
+		_, err := rolesCollection.UpdateOne(context.TODO(), filter, update, opts)
 		if err != nil {
 			if err == mongo.ErrNoDocuments {
-				_, err := collection.InsertOne(context.TODO(), role)
+				_, err := rolesCollection.InsertOne(context.TODO(), role)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create role: " + role.Name})
 					return

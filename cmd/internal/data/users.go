@@ -8,6 +8,10 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const (
+	CollectionUser = "user"
+)
+
 type User struct {
 	ID             primitive.ObjectID   `bson:"_id,omitempty"`
 	Name           string               `bson:"name"`

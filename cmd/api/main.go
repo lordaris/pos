@@ -12,6 +12,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const DatabaseName = "pos"
+
 type config struct {
 	db struct {
 		uri         string
@@ -65,4 +67,9 @@ func connect_to_mongodb(cfg *config) error {
 	}
 	cfg.db.mongoClient = client
 	return nil
+}
+
+func (app *application) Collection(coll string) *mongo.Collection {
+	collection := app.config.db.mongoClient.Database(DatabaseName).Collection(coll)
+	return collection
 }

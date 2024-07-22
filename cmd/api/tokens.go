@@ -21,7 +21,7 @@ func (app *application) createAuthenticationToken(c *gin.Context) {
 		return
 	}
 
-	usersCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+	usersCollection := app.Collection(data.CollectionUser)
 	var user data.User
 	err := usersCollection.FindOne(context.TODO(), bson.M{"username": input.Username}).Decode(&user)
 	if err != nil {

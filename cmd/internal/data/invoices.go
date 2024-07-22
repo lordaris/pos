@@ -6,6 +6,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	CollectionInvoice = "invoices"
+)
+
 type Invoice struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`
 	TicketNumber int                `bson:"ticket_number"`
