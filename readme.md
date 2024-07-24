@@ -1,27 +1,33 @@
 # POS
 
-1. create a .env file containing a variable called MONGODB_URI, and use your mongodb uri there.
-2. run `go run ./cmd/api` to start the server
-3. run `sh test.sh create-roles` to create default roles (you can modify this file to create or delete default roles)
-4. go to <http://localhost:8080> or
+1. Install Gin with:
+
+```bash
+go get -u github.com/gin-gonic/gin
+```
+
+2. create a .env file containing a variable called MONGODB_URI, and use your mongodb uri there.
+3. run `go run ./cmd/api` to start the server
+4. run `sh test.sh create-roles` to create default roles (you can modify this file to create or delete default roles)
+5. go to <http://localhost:8080> or
 
 ## Endpoints
 
 | Method | URL pattern         | Handler                 | Status      |
 | ------ | ------------------- | ----------------------- | ----------- |
-| GET    | "/user/:id"         | getUser                 | In progress |
-| GET    | "/users/:role"      | getUsersByRole          | In progress |
-| POST   | "/user"             | createUser              | In progress |
-| PUT    | "/user/:id"         | updateUser              | In progress |
+| GET    | "/user/:id"         | getUser                 | Done        |
+| GET    | "/users/:role"      | getUsersByRole          | Done        |
+| POST   | "/user"             | createUser              | Done        |
+| PUT    | "/user/:id"         | updateUser              | Done        |
 | DELETE | "/user/:id"         | deleteUser              | Done        |
-| PUT    | "/user/:id/role"    | updateUserRole          | In progress |
+| PUT    | "/user/:id/role"    | updateUserRole          | Done        |
 | GET    | "/product/:barcode" | getProduct              | Done        |
-| POST   | "/product"          | createProduct           | In progress |
-| PUT    | "/product/:barcode" | updateProduct           | Not started |
+| POST   | "/product"          | createProduct           | Done        |
+| PUT    | "/product/:barcode" | updateProduct           | Done        |
 | DELETE | "/product/:barcode" | deleteProduct           | Done        |
-| GET    | "/category"         | getCategory             | Not started |
-| POST   | "/category"         | createCategory          | Not started |
-| PUT    | "/category/:id"     | updateCategory          | Not started |
+| GET    | "/category"         | getCategories           | Done        |
+| POST   | "/category"         | createCategory          | Done        |
+| PUT    | "/category/:id"     | updateCategory          | Done        |
 | DELETE | "/category/:id"     | deleteCategory          | Not started |
 | GET    | "/promotion/:id"    | getPromotion            | Not started |
 | POST   | "/promotion"        | productPromotion        | Done        |
@@ -50,9 +56,6 @@ To create a promotion, the user should select one of three types: `DiscountPrice
 - **DiscountPrice:** This sets a new fixed price for the product. If active, this price should be used instead of the regular price.
 - **BuyGet:** This promotion has two fields: the number of items the customer needs to buy (`BuyQuantity`) and the number of items the customer gets for free (`GetQuantity`). The system should detect the quantity of products bought and adjust the total price accordingly by discounting the price of the free products.
 - **StartDate** and **EndDate** should be sent as ISO 8601 (`2024-07-01t14:00:00Z`). That can be achieved using "toISOString()" method in the client.
-
-TODO: Update this when the middleware is created
-The user update doesn't ask for the old password to modify the user nor its password, as it's intended to be used for administrators and not the actual user itself. It should be protected via middleware checking for the role permissions.
 
 ---
 

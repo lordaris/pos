@@ -15,9 +15,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// TODO: The point-of-sale (POS) system logic should account for the existence of multiple offers with different dates and only apply active offers during transactions.
-// **Additionally, a mechanism should be implemented to automatically remove expired offers from the product document (TTL in mongodb or a Cron).**
-//
 // TODO: Refactor code to make it modular.
 
 func (app *application) createProduct(c *gin.Context) {
