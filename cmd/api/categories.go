@@ -30,17 +30,16 @@ func (app *application) createCategory(c *gin.Context) {
 		return
 	}
 
-	category.Name = input.Name
-
 	// Check if a category with the same name exists
 	categoriesCollection := app.Collection(data.CollectionCategory)
 	var existingCategory data.Category
-	err := categoriesCollection.FindOne(context.TODO(), bson.M{"name": category.Name}).Decode(&existingCategory)
+	err := categoriesCollection.FindOne(context.TODO(), bson.M{"name": input.Name}).Decode(&existingCategory)
 	if err == nil {
 		c.JSON(http.StatusConflict, gin.H{"error": "Category already exists"})
 		return
 	}
 
+	category.Name = input.Name
 	result, err := categoriesCollection.InsertOne(context.TODO(), category)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create categories"})

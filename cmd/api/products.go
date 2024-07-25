@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -73,14 +72,13 @@ func (app *application) createProduct(c *gin.Context) {
 		MinStock:    input.MinStock,
 		Barcode:     input.Barcode,
 		CategoryID:  categoryObjectID,
-		// send this field to initialize it as an empty array, because if it's null, a new offer cannot be created (as it should be an array and not null)
-		Promotions: []data.Promotion{},
 	}
 
 	// Insert the new user document into the user collection
 	result, err := productsCollection.InsertOne(context.TODO(), product)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create product"})
+		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"id": result.InsertedID})
@@ -121,11 +119,9 @@ func (app *application) productPromotion(c *gin.Context) {
 		return
 	}
 
-	for _, promotion := range existingProduct.Promotions {
-		if input.StartDate.Before(promotion.EndDate) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "StartDate should start after any existing promotion EndDate"})
-			return
-		}
+	if input.Type == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "type cannot be empty, it should contain DiscountPercentage | DiscountPrice | BuyGet"})
+		return
 	}
 
 	switch input.Type {
@@ -153,7 +149,8 @@ func (app *application) productPromotion(c *gin.Context) {
 			return
 		}
 	default:
-		fmt.Println("You should select one of the next options: DiscountPercentage | DiscountPrice | BuyGet")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid promotion type"})
+		return
 	}
 
 	newPromotion := &data.Promotion{
@@ -179,8 +176,8 @@ func (app *application) productPromotion(c *gin.Context) {
 		newPromotion.GetQuantity = *input.GetQuantity
 	}
 
-	update := bson.D{{"$push", bson.D{
-		{"promotions", newPromotion},
+	update := bson.D{{"$set", bson.D{
+		{"promotion", newPromotion},
 	}}}
 	_, err = productsCollection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {

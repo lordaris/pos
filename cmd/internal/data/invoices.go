@@ -24,9 +24,9 @@ type Invoice struct {
 }
 
 type InvoiceItem struct {
-	ProductID primitive.ObjectID `bson:"product_id"`
-	Quantity  int                `bson:"quantity"`
-	Price     float64            `bson:"price"`
+	Barcode  int     `bson:"barcode"`
+	Quantity int     `bson:"quantity"`
+	Price    float64 `bson:"price"`
 }
 
 type PaymentMethod struct {

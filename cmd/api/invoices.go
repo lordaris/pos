@@ -15,12 +15,11 @@ import (
 
 func (app *application) createInvoice(c *gin.Context) {
 	var input struct {
-		TotalAmount float64   `json:"total_amount"`
-		SaleDate    time.Time `json:"sale_date"`
-		Items       []struct {
-			ProductID primitive.ObjectID `json:"product_id"`
-			Quantity  int                `json:"quantity"`
-			Price     float64            `json:"price,omitempty"`
+		SaleDate time.Time `json:"sale_date"`
+		Items    []struct {
+			Barcode  int     `json:"barcode"`
+			Quantity int     `json:"quantity"`
+			Price    float64 `json:"price,omitempty"`
 		} `json:"items"`
 	}
 
@@ -62,7 +61,7 @@ func (app *application) createInvoice(c *gin.Context) {
 		var totalAmount float64
 		for i, item := range input.Items {
 			var product data.Product
-			filter := bson.M{"_id": item.ProductID}
+			filter := bson.M{"barcode": item.Barcode}
 			err := productsCollection.FindOne(sc, filter).Decode(&product)
 			if err != nil {
 				if err == mongo.ErrNoDocuments {
@@ -73,29 +72,29 @@ func (app *application) createInvoice(c *gin.Context) {
 				return nil // Return nil to abort the session without an error
 			}
 
-			for _, promotion := range product.Promotions {
-				if promotion.StartDate.Before(time.Now()) && promotion.EndDate.After(time.Now()) {
-					switch promotion.Type {
-					case "DiscountPercentage":
-						itemPrice := product.Price * float64(item.Quantity)
-						discount := itemPrice * float64(promotion.DiscountPercentage) / 100
-						totalAmount += itemPrice - discount
-					case "DiscountPrice":
-						totalAmount += float64(item.Quantity) * float64(promotion.DiscountPrice)
-					case "BuyGet":
-						productModule := item.Quantity % promotion.GetQuantity
-						itemGetQuotient := int(item.Quantity / promotion.GetQuantity)
-						paidProducts := (itemGetQuotient * promotion.BuyQuantity) + productModule
-						totalAmount += product.Price * float64(paidProducts)
-					}
-				} else {
-					totalAmount += product.Price * float64(item.Quantity)
+			price := product.Price
+			if product.Promotion.StartDate.Before(time.Now()) && product.Promotion.EndDate.After(time.Now()) {
+				switch product.Promotion.Type {
+				case "DiscountPercentage":
+					price = price - (price * float64(product.Promotion.DiscountPercentage) / 100)
+					totalAmount = price * float64(item.Quantity)
+
+				case "DiscountPrice":
+					price = float64(product.Promotion.DiscountPrice)
+					totalAmount = price * float64(item.Quantity)
+
+				case "BuyGet":
+
+					productModule := item.Quantity % product.Promotion.GetQuantity
+					itemGetQuotient := int(item.Quantity / product.Promotion.GetQuantity)
+					paidProducts := (itemGetQuotient * product.Promotion.BuyQuantity) + productModule
+					totalAmount += product.Price * float64(paidProducts)
+
 				}
+			} else {
+				totalAmount += price * float64(item.Quantity)
 			}
 
-			if len(product.Promotions) == 0 {
-				totalAmount += product.Price * float64(item.Quantity)
-			}
 			input.Items[i].Price = product.Price
 		}
 		// Create the invoice object
@@ -109,15 +108,18 @@ func (app *application) createInvoice(c *gin.Context) {
 
 		for i, item := range input.Items {
 			invoice.Items[i] = data.InvoiceItem{
-				ProductID: item.ProductID,
-				Quantity:  item.Quantity,
-				Price:     item.Price,
+				Barcode:  item.Barcode,
+				Quantity: item.Quantity,
+				Price:    item.Price,
 			}
 		}
 
 		// Insert the new invoice
 		_, err = invoiceCollection.InsertOne(sc, invoice)
-		return err
+		if err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

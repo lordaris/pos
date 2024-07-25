@@ -16,5 +16,5 @@ type Product struct {
 	MinStock    int                `bson:"min_stock"`
 	Barcode     int                `bson:"barcode"`
 	CategoryID  primitive.ObjectID `bson:"category_id"`
-	Promotions  []Promotion        `bson:"promotions"`
+	Promotion   Promotion          `bson:"promotion"`
 }
