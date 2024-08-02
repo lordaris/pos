@@ -25,7 +25,7 @@ func (app *application) createAuthenticationToken(c *gin.Context) {
 	var user data.User
 	err := usersCollection.FindOne(context.TODO(), bson.M{"username": input.Username}).Decode(&user)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No users with that username"})
 		return
 	}
 

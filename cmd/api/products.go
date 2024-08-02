@@ -74,7 +74,7 @@ func (app *application) createProduct(c *gin.Context) {
 		CategoryID:  categoryObjectID,
 	}
 
-	// Insert the new user document into the user collection
+	// Insert the new product document into the product collection
 	result, err := productsCollection.InsertOne(context.TODO(), product)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create product"})
@@ -114,13 +114,9 @@ func (app *application) productPromotion(c *gin.Context) {
 		return
 	}
 
+	// Validate startdate
 	if input.StartDate.After(input.EndDate) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "StartDate should be less than EndDate"})
-		return
-	}
-
-	if input.Type == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "type cannot be empty, it should contain DiscountPercentage | DiscountPrice | BuyGet"})
 		return
 	}
 
