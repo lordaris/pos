@@ -1,29 +1,30 @@
 #!/bin/bash
 
 # Run sh test.sh to run the scripts
-create_product() {
-	echo "Creating a new product..."
-	curl -X POST http://localhost:8080/product \
-		-H "Content-Type: application/json" \
-		-d '{
-            "name": "Example Product with category 2",
-            "brand": "Example Brand",
-            "description": "This is an example product",
-            "price": 19.99,
-            "stock": 100,
-            "min_stock": 10,
-            "barcode": 1234567890123,
-            "category_id": "6675dceb834a3b2b5e254b65"
-        }'
-	echo
-}
-
+#
 create_category() {
 	echo "Creating a new category..."
 	curl -X POST http://localhost:8080/category \
 		-H "Content-Type: application/json" \
 		-d '{
             "name": "Example Category"
+        }'
+	echo
+}
+
+create_product() {
+	echo "Creating a new product..."
+	curl -X POST http://localhost:8080/product \
+		-H "Content-Type: application/json" \
+		-d '{
+            "name": "Sabritas",
+            "brand": "Sabritas",
+            "description": "Paquete sabritas con 60g",
+            "price": 19.99,
+            "stock": 100,
+            "min_stock": 10,
+            "barcode": 123,
+            "category_id": "66ad0fcbf10b10eec2a6d309"
         }'
 	echo
 }

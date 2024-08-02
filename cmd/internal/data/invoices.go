@@ -24,9 +24,10 @@ type Invoice struct {
 }
 
 type InvoiceItem struct {
-	Barcode  int     `bson:"barcode"`
-	Quantity int     `bson:"quantity"`
-	Price    float64 `bson:"price"`
+	ProductName string  `bson:"product_name"`
+	Barcode     int     `bson:"barcode"`
+	Quantity    int     `bson:"quantity"`
+	Price       float64 `bson:"price"`
 }
 
 type PaymentMethod struct {

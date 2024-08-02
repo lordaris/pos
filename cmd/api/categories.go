@@ -122,3 +122,27 @@ func (app *application) updateCategory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Category updated successfully"})
 }
+
+func (app *application) deleteCategory(c *gin.Context) {
+	categoryID := c.Param("id")
+
+	id, err := primitive.ObjectIDFromHex(categoryID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	categoriesCollection := app.Collection(data.CollectionCategory)
+	filter := bson.D{{"_id", id}}
+	result, err := categoriesCollection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Category not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Category deleted successfully"})
+}

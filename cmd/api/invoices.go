@@ -17,9 +17,10 @@ func (app *application) createInvoice(c *gin.Context) {
 	var input struct {
 		SaleDate time.Time `json:"sale_date"`
 		Items    []struct {
-			Barcode  int     `json:"barcode"`
-			Quantity int     `json:"quantity"`
-			Price    float64 `json:"price,omitempty"`
+			ProductName string  `json:"product_name,omitempty"`
+			Barcode     int     `json:"barcode"`
+			Quantity    int     `json:"quantity"`
+			Price       float64 `json:"price,omitempty"`
 		} `json:"items"`
 	}
 
@@ -72,6 +73,14 @@ func (app *application) createInvoice(c *gin.Context) {
 				return nil // Return nil to abort the session without an error
 			}
 
+			// Update product stock
+			updateStock := bson.M{"$inc": bson.M{"stock": -item.Quantity}}
+			_, err = productsCollection.UpdateOne(sc, filter, updateStock)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product stock"})
+				return nil
+			}
+
 			price := product.Price
 			if product.Promotion.StartDate.Before(time.Now()) && product.Promotion.EndDate.After(time.Now()) {
 				switch product.Promotion.Type {
@@ -96,6 +105,7 @@ func (app *application) createInvoice(c *gin.Context) {
 			}
 
 			input.Items[i].Price = product.Price
+			input.Items[i].ProductName = product.Name
 		}
 		// Create the invoice object
 		invoice := &data.Invoice{
@@ -108,9 +118,10 @@ func (app *application) createInvoice(c *gin.Context) {
 
 		for i, item := range input.Items {
 			invoice.Items[i] = data.InvoiceItem{
-				Barcode:  item.Barcode,
-				Quantity: item.Quantity,
-				Price:    item.Price,
+				ProductName: item.ProductName,
+				Barcode:     item.Barcode,
+				Quantity:    item.Quantity,
+				Price:       item.Price,
 			}
 		}
 

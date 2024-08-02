@@ -122,12 +122,23 @@ func (app *application) updateUser(c *gin.Context) {
 		return
 	}
 
+	// Verify that the new username doesn't exist, and if so, return an error.
+	if updatedUser.Username != nil && *updatedUser.Username != existingUser.Username {
+		var existingUsername data.User
+		err = usersCollection.FindOne(context.TODO(), bson.M{"username": *updatedUser.Username}).Decode(&existingUsername)
+		if err == nil {
+			c.JSON(http.StatusConflict, gin.H{"error": "Username already exists"})
+			return
+		} else if err != mongo.ErrNoDocuments {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		existingUser.Username = *updatedUser.Username
+	}
+
 	// Update user fields only if provided
 	if updatedUser.Name != nil {
 		existingUser.Name = *updatedUser.Name
-	}
-	if updatedUser.Username != nil {
-		existingUser.Username = *updatedUser.Username
 	}
 
 	if updatedUser.Password != nil {
