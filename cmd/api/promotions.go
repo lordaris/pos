@@ -187,7 +187,7 @@ func (app *application) updatePromotion(c *gin.Context) {
 		return
 	}
 
-	if err := validateAndUpdatePromotion(&existingProduct.Promotion, promotionUpdate); err != nil {
+	if err := validateAndUpdatePromotion(&existingProduct.Promotion, updatePromotion); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
