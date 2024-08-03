@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -175,84 +176,29 @@ func (app *application) updatePromotion(c *gin.Context) {
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
-			return
-		} else if existingProduct.Promotion.Type == "" {
-			c.JSON(http.StatusNotFound, gin.H{"error": "The product doesn't have promotions"})
-			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve product"})
 		}
-
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	if updatePromotion.Type != nil {
-		existingProduct.Promotion.Type = *updatePromotion.Type
-	}
-
-	if *updatePromotion.Type == "BuyGet" {
-		if updatePromotion.GetQuantity == nil || updatePromotion.BuyQuantity == nil || *updatePromotion.GetQuantity <= 0 || *updatePromotion.BuyQuantity <= 0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "You should provide GetQuantity and BuyQuantity and they should be greater than 0"})
-			return
-		} else if *updatePromotion.BuyQuantity >= *updatePromotion.GetQuantity {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "BuyQuantity should be less than GetQuantity"})
-			return
-		}
-		existingProduct.Promotion.BuyQuantity = *updatePromotion.BuyQuantity
-		existingProduct.Promotion.GetQuantity = *updatePromotion.GetQuantity
-	}
-
-	if *updatePromotion.Type == "DiscountPercentage" {
-		if updatePromotion.DiscountPercentage == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Discount percentage should not be empty"})
-			return
-		}
-		if *updatePromotion.DiscountPercentage == 0 || *updatePromotion.DiscountPercentage >= 100 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Discound percentage should be a number from 1 to 99"})
-			return
-		}
-
-		existingProduct.Promotion.DiscountPercentage = *updatePromotion.DiscountPercentage
-
-	}
-
-	if *updatePromotion.Type == "DiscountPrice" {
-		if updatePromotion.DiscountPrice == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Discount price should not be empty"})
-			return
-		}
-		if *updatePromotion.DiscountPrice <= 0.0 {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Discound price should be greater than zero"})
-			return
-		}
-		existingProduct.Promotion.DiscountPrice = *updatePromotion.DiscountPrice
-
-	}
-
-	if updatePromotion.Type != nil {
-		existingProduct.Promotion.Type = *updatePromotion.Type
-	}
-
-	if updatePromotion.StartDate != nil {
-		existingProduct.Promotion.StartDate = *updatePromotion.StartDate
-	}
-	if updatePromotion.EndDate != nil {
-		existingProduct.Promotion.EndDate = *updatePromotion.EndDate
-	}
-
-	// Validate startdate
-	if existingProduct.Promotion.StartDate.After(existingProduct.Promotion.EndDate) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "StartDate should be less than EndDate"})
+	if existingProduct.Promotion.Type == "" {
+		c.JSON(http.StatusNotFound, gin.H{"error": "The product doesn't have promotions"})
 		return
 	}
 
-	// Update the user document in the database
-	_, err = productsCollection.UpdateOne(context.TODO(), bson.M{"barcode": barcode}, bson.M{"$set": existingProduct})
+	if err := validateAndUpdatePromotion(&existingProduct.Promotion, promotionUpdate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	update := bson.M{"$set": bson.M{"promotion": existingProduct.Promotion}}
+	_, err = productsCollection.UpdateOne(context.TODO(), bson.M{"barcode": barcode}, update)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update promotion"})
 		return
 	}
 
-	// Respond with a success message
 	c.JSON(http.StatusOK, gin.H{"message": "Promotion updated successfully"})
 }
 
@@ -265,4 +211,76 @@ func hasAnyUpdate(update interface{}) bool {
 		}
 	}
 	return false
+}
+
+func validateAndUpdatePromotion(existing *data.Promotion, update struct {
+	Type               *string    `json:"type"`
+	DiscountPercentage *int       `json:"discount_percentage"`
+	DiscountPrice      *float32   `json:"discount_price"`
+	BuyQuantity        *int       `json:"buy_quantity"`
+	GetQuantity        *int       `json:"get_quantity"`
+	StartDate          *time.Time `json:"start_date"`
+	EndDate            *time.Time `json:"end_date"`
+},
+) error {
+	if update.Type != nil {
+		existing.Type = *update.Type
+		switch *update.Type {
+		case "BuyGet":
+			if err := validateBuyGet(update.BuyQuantity, update.GetQuantity); err != nil {
+				return err
+			}
+			existing.BuyQuantity = *update.BuyQuantity
+			existing.GetQuantity = *update.GetQuantity
+		case "DiscountPercentage":
+			if err := validateDiscountPercentage(update.DiscountPercentage); err != nil {
+				return err
+			}
+			existing.DiscountPercentage = *update.DiscountPercentage
+		case "DiscountPrice":
+			if err := validateDiscountPrice(update.DiscountPrice); err != nil {
+				return err
+			}
+			existing.DiscountPrice = *update.DiscountPrice
+		default:
+			return fmt.Errorf("invalid promotion type")
+		}
+	}
+
+	if update.StartDate != nil {
+		existing.StartDate = *update.StartDate
+	}
+	if update.EndDate != nil {
+		existing.EndDate = *update.EndDate
+	}
+
+	if existing.StartDate.After(existing.EndDate) {
+		return fmt.Errorf("start date should be before end date")
+	}
+
+	return nil
+}
+
+func validateBuyGet(buy, get *int) error {
+	if buy == nil || get == nil || *buy <= 0 || *get <= 0 {
+		return fmt.Errorf("buy and get quantities should be provided and greater than 0")
+	}
+	if *buy >= *get {
+		return fmt.Errorf("buy quantity should be less than get quantity")
+	}
+	return nil
+}
+
+func validateDiscountPercentage(discount *int) error {
+	if discount == nil || *discount <= 0 || *discount >= 100 {
+		return fmt.Errorf("discount percentage should be between 1 and 99")
+	}
+	return nil
+}
+
+func validateDiscountPrice(price *float32) error {
+	if price == nil || *price <= 0 {
+		return fmt.Errorf("discount price should be greater than zero")
+	}
+	return nil
 }
