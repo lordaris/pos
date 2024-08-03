@@ -148,7 +148,7 @@ func (app *application) updatePromotion(c *gin.Context) {
 	}
 
 	// Define a struct to hold the optional updated user data
-	var updatePromotion struct {
+	var promotionUpdate struct {
 		Type               *string    `json:"type"`
 		DiscountPercentage *int       `json:"discount_percentage"`
 		DiscountPrice      *float32   `json:"discount_price"`
@@ -158,13 +158,13 @@ func (app *application) updatePromotion(c *gin.Context) {
 		EndDate            *time.Time `json:"end_date"`
 	}
 
-	if err := c.ShouldBindJSON(&updatePromotion); err != nil {
+	if err := c.ShouldBindJSON(&promotionUpdate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	// Check if at least one field is provided for update
-	if !hasAnyUpdate(updatePromotion) {
+	if !hasAnyUpdate(promotionUpdate) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "No promotion fields provided for update"})
 		return
 	}
@@ -187,7 +187,7 @@ func (app *application) updatePromotion(c *gin.Context) {
 		return
 	}
 
-	if err := validateAndUpdatePromotion(&existingProduct.Promotion, updatePromotion); err != nil {
+	if err := validateAndUpdatePromotion(&existingProduct.Promotion, promotionUpdate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
