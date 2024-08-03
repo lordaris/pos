@@ -213,7 +213,7 @@ func hasAnyUpdate(update interface{}) bool {
 	return false
 }
 
-func validateAndUpdatePromotion(existing *data.Promotion, update struct {
+type promotionInfo struct {
 	Type               *string    `json:"type"`
 	DiscountPercentage *int       `json:"discount_percentage"`
 	DiscountPrice      *float32   `json:"discount_price"`
@@ -221,8 +221,9 @@ func validateAndUpdatePromotion(existing *data.Promotion, update struct {
 	GetQuantity        *int       `json:"get_quantity"`
 	StartDate          *time.Time `json:"start_date"`
 	EndDate            *time.Time `json:"end_date"`
-},
-) error {
+}
+
+func validateAndUpdatePromotion(existing *data.Promotion, update promotionInfo) error {
 	if update.Type != nil {
 		existing.Type = *update.Type
 		switch *update.Type {
