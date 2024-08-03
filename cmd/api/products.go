@@ -184,6 +184,29 @@ func (app *application) productPromotion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": newPromotion})
 }
 
+func (app *application) getPromotion(c *gin.Context) {
+	barcodeStr := c.Param("barcode")
+	barcode, err := strconv.Atoi(barcodeStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	productsCollection := app.Collection(data.CollectionProduct)
+	filter := bson.D{{"barcode", barcode}}
+	var existingProduct data.Product
+	err = productsCollection.FindOne(context.TODO(), filter).Decode(&existingProduct)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"promotion": existingProduct.Promotion, "product": existingProduct.Name, "barcode": existingProduct.Barcode})
+}
+
 func (app *application) getProduct(c *gin.Context) {
 	barcodeStr := c.Param("barcode")
 	barcode, err := strconv.Atoi(barcodeStr)

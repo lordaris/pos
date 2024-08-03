@@ -28,12 +28,11 @@ go get -u github.com/gin-gonic/gin
 | GET    | "/category"         | getCategories           | Done        |
 | POST   | "/category"         | createCategory          | Done        |
 | PUT    | "/category/:id"     | updateCategory          | Done        |
-| DELETE | "/category/:id"     | deleteCategory          | Not started |
-| GET    | "/promotion/:id"    | getPromotion            | Not started |
+| DELETE | "/category/:id"     | deleteCategory          | Done        |
+| GET    | "/promotion/:id"    | getPromotion            | Done        |
 | POST   | "/promotion"        | productPromotion        | Done        |
 | PUT    | "/promotion/:id"    | updatePromotion         | Not started |
-| DELETE | "/promotion/:id"    | deletePromotion         | Not started |
-| GET    | "/inventory/:id"    | getInventoryMovement    | Not started |
+| DELETE | "/promotion/:id"    | deletePromotion         | Done        |
 | POST   | "/inventory"        | createInventoryMovement | Not started |
 | PUT    | "/inventory/:id"    | updateInventoryMovement | Not started |
 | DELETE | "/inventory/:id"    | deleteInventoryMovement | Not started |

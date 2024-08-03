@@ -29,6 +29,7 @@ func Router(r *gin.Engine, app *application) {
 	r.PUT("/category/:id", app.updateCategory)
 	r.DELETE("/category/:id", app.deleteCategory)
 	r.POST("/promotion", app.productPromotion)
+	r.GET("/promotion/:barcode", app.getPromotion)
 	r.GET("/product/:barcode", app.getProduct)
 	r.DELETE("/product/:barcode", app.deleteProduct)
 	r.PUT("/product/:barcode", app.updateProduct)

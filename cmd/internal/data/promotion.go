@@ -6,6 +6,10 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	CollectionPromotion = "promotions"
+)
+
 type Promotion struct {
 	ID                 primitive.ObjectID `bson:"_id,omitempty"`
 	Type               string             `bson:"type"`
