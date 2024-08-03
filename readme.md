@@ -31,7 +31,7 @@ go get -u github.com/gin-gonic/gin
 | DELETE | "/category/:id"     | deleteCategory          | Done        |
 | GET    | "/promotion/:id"    | getPromotion            | Done        |
 | POST   | "/promotion"        | productPromotion        | Done        |
-| PUT    | "/promotion/:id"    | updatePromotion         | Not started |
+| PUT    | "/promotion/:id"    | updatePromotion         | Done        |
 | DELETE | "/promotion/:id"    | deletePromotion         | Done        |
 | POST   | "/inventory"        | createInventoryMovement | Not started |
 | PUT    | "/inventory/:id"    | updateInventoryMovement | Not started |
