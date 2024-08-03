@@ -139,6 +139,16 @@ func (app *application) getPromotion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"promotion": existingProduct.Promotion, "product": existingProduct.Name, "barcode": existingProduct.Barcode})
 }
 
+type promotionInfo struct {
+	Type               *string    `json:"type"`
+	DiscountPercentage *int       `json:"discount_percentage"`
+	DiscountPrice      *float32   `json:"discount_price"`
+	BuyQuantity        *int       `json:"buy_quantity"`
+	GetQuantity        *int       `json:"get_quantity"`
+	StartDate          *time.Time `json:"start_date"`
+	EndDate            *time.Time `json:"end_date"`
+}
+
 func (app *application) updatePromotion(c *gin.Context) {
 	barcodeStr := c.Param("barcode")
 	barcode, err := strconv.Atoi(barcodeStr)
@@ -148,15 +158,7 @@ func (app *application) updatePromotion(c *gin.Context) {
 	}
 
 	// Define a struct to hold the optional updated user data
-	var promotionUpdate struct {
-		Type               *string    `json:"type"`
-		DiscountPercentage *int       `json:"discount_percentage"`
-		DiscountPrice      *float32   `json:"discount_price"`
-		BuyQuantity        *int       `json:"buy_quantity"`
-		GetQuantity        *int       `json:"get_quantity"`
-		StartDate          *time.Time `json:"start_date"`
-		EndDate            *time.Time `json:"end_date"`
-	}
+	var promotionUpdate promotionInfo
 
 	if err := c.ShouldBindJSON(&promotionUpdate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -211,16 +213,6 @@ func hasAnyUpdate(update interface{}) bool {
 		}
 	}
 	return false
-}
-
-type promotionInfo struct {
-	Type               *string    `json:"type"`
-	DiscountPercentage *int       `json:"discount_percentage"`
-	DiscountPrice      *float32   `json:"discount_price"`
-	BuyQuantity        *int       `json:"buy_quantity"`
-	GetQuantity        *int       `json:"get_quantity"`
-	StartDate          *time.Time `json:"start_date"`
-	EndDate            *time.Time `json:"end_date"`
 }
 
 func validateAndUpdatePromotion(existing *data.Promotion, update promotionInfo) error {
