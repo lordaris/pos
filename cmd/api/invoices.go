@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"math"
 	"net/http"
 	"time"
 
@@ -45,6 +46,7 @@ func (app *application) createInvoice(c *gin.Context) {
 	// Using transactions (with mongo.WithSession) allows to execute multiple operations as a single logical unit of work,
 	// and allow data consistency an integrity.
 	ticketNumber := 1
+	var invoiceInfo data.Invoice
 	err = mongo.WithSession(context.Background(), session, func(sc mongo.SessionContext) error {
 		// Find the last ticket number
 		opts := options.FindOne().SetSort(bson.D{{"ticket_number", -1}})
@@ -107,6 +109,8 @@ func (app *application) createInvoice(c *gin.Context) {
 			input.Items[i].Price = product.Price
 			input.Items[i].ProductName = product.Name
 		}
+
+		totalAmount = math.Round(totalAmount*100) / 100
 		// Create the invoice object
 		invoice := &data.Invoice{
 			ID:           primitive.NewObjectID(),
@@ -125,6 +129,8 @@ func (app *application) createInvoice(c *gin.Context) {
 			}
 		}
 
+		invoiceInfo = *invoice
+
 		// Insert the new invoice
 		_, err = invoiceCollection.InsertOne(sc, invoice)
 		if err != nil {
@@ -137,5 +143,5 @@ func (app *application) createInvoice(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"ticket_number": ticketNumber})
+	c.JSON(http.StatusCreated, gin.H{"invoice": invoiceInfo})
 }
