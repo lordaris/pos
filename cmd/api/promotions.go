@@ -149,6 +149,7 @@ type promotionInfo struct {
 	EndDate            *time.Time `json:"end_date"`
 }
 
+// updatePromotion handles the update of a promotion for a specific product
 func (app *application) updatePromotion(c *gin.Context) {
 	barcodeStr := c.Param("barcode")
 	barcode, err := strconv.Atoi(barcodeStr)
@@ -157,9 +158,11 @@ func (app *application) updatePromotion(c *gin.Context) {
 		return
 	}
 
-	// Define a struct to hold the optional updated user data
+	// Define a variable with the promotionInfo structure for the promotion update fields
+
 	var promotionUpdate promotionInfo
 
+	// Bind the JSON from the request body to the structure
 	if err := c.ShouldBindJSON(&promotionUpdate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -171,7 +174,7 @@ func (app *application) updatePromotion(c *gin.Context) {
 		return
 	}
 
-	// Get the existing user document from the database
+	// Get the existing product document from the database
 	productsCollection := app.Collection(data.CollectionProduct)
 	var existingProduct data.Product
 	err = productsCollection.FindOne(context.TODO(), bson.M{"barcode": barcode}).Decode(&existingProduct)
