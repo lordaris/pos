@@ -10,6 +10,7 @@ const (
 	CollectionInventory = "inventory_movement"
 )
 
+// MovementType IN / OUT
 // Type can be an adjustment, entry of new products, product transfer, etc...
 type InventoryMovement struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`

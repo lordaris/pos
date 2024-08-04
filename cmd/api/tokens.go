@@ -36,7 +36,7 @@ func (app *application) createAuthenticationToken(c *gin.Context) {
 	}
 
 	// Set the duration of the token
-	token, err := data.GenerateToken(time.Hour)
+	token, err := data.GenerateToken(time.Minute / 2)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return

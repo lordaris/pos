@@ -6,10 +6,11 @@ TODO:
 
 - Crear un handler para los movimientos de inventario.
 
-  - Ingresar un tipo de movimiento
+  - Ingresar un tipo de movimiento IN / OUT
   - Recibir el ID del producto
   - Buscar el barcode del producto
   - Utilizar el middleware y el context
+    - Para registrar al usuario
 
 - [x] Modificar el total del ticket para que solo regrese dos decimales.
 
@@ -19,4 +20,6 @@ TODO:
 
 - [x] Modificar la estructura de tokens para almacenarla en la colección de usuarios
 
-- [x] Modificar los handlers relacionados con tokens y el middleware, ya que estos buscan los tokens en una colección separada. -[x] Regresar el nombre de cada producto en el invoice.
+- [x] Modificar los handlers relacionados con tokens y el middleware, ya que estos buscan los tokens en una colección separada.
+
+-[x] Regresar el nombre de cada producto en el invoice.
