@@ -35,20 +35,13 @@ func (app *application) createAuthenticationToken(c *gin.Context) {
 		return
 	}
 
-	token, err := data.GenerateToken(input.Username, time.Hour)
+	// Set the duration of the token
+	token, err := data.GenerateToken(time.Hour)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	tokensCollection := app.config.db.mongoClient.Database("pos").Collection("tokens")
-	_, err = tokensCollection.InsertOne(context.TODO(), token)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	_, err = usersCollection.UpdateOne(context.TODO(), bson.M{"username": user.Username}, bson.M{"$push": bson.M{"tokens": token.ID}})
+	_, err = usersCollection.UpdateOne(context.TODO(), bson.M{"username": user.Username}, bson.M{"$push": bson.M{"tokens": token}})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

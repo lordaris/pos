@@ -6,6 +6,11 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+const (
+	CollectionInventory = "inventory_movement"
+)
+
+// Type can be an adjustment, entry of new products, product transfer, etc...
 type InventoryMovement struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`
 	ProductID    primitive.ObjectID `bson:"product_id"`

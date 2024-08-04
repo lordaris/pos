@@ -187,17 +187,22 @@ func (app *application) updatePromotion(c *gin.Context) {
 		return
 	}
 
+	// Check for existing promotions
 	if existingProduct.Promotion.Type == "" {
 		c.JSON(http.StatusNotFound, gin.H{"error": "The product doesn't have promotions"})
 		return
 	}
 
+	// Validate and update the promotion
 	if err := validateAndUpdatePromotion(&existingProduct.Promotion, promotionUpdate); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	// Prepare the update for the database
 	update := bson.M{"$set": bson.M{"promotion": existingProduct.Promotion}}
+
+	// Update the document in the database
 	_, err = productsCollection.UpdateOne(context.TODO(), bson.M{"barcode": barcode}, update)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update promotion"})
@@ -207,7 +212,7 @@ func (app *application) updatePromotion(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Promotion updated successfully"})
 }
 
-// It checks if there's any value stored in the interface.
+// It checks if there's any value stored in the interface (if any field was provided for update)
 func hasAnyUpdate(update interface{}) bool {
 	val := reflect.ValueOf(update)
 	for i := 0; i < val.NumField(); i++ {
@@ -218,6 +223,7 @@ func hasAnyUpdate(update interface{}) bool {
 	return false
 }
 
+// Validates and updates the promotion fields
 func validateAndUpdatePromotion(existing *data.Promotion, update promotionInfo) error {
 	if update.Type != nil {
 		existing.Type = *update.Type

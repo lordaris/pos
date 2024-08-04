@@ -6,23 +6,17 @@ import (
 	"encoding/base32"
 	"errors"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Token struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty"`
-	Plaintext string             `bson:"token"`
-	Hash      []byte             `bson:"hash"`
-	UserName  string             `bson:"username"`
-	Expiry    time.Time          `bson:"expiry"`
+	Plaintext string    `bson:"token"`
+	Hash      []byte    `bson:"hash"`
+	Expiry    time.Time `bson:"expiry"`
 }
 
-func GenerateToken(userName string, ttl time.Duration) (*Token, error) {
+func GenerateToken(ttl time.Duration) (*Token, error) {
 	token := &Token{
-		ID:       primitive.NewObjectID(),
-		UserName: userName,
-		Expiry:   time.Now().Add(ttl),
+		Expiry: time.Now().Add(ttl),
 	}
 
 	// initialize a zero-valued byte slice with a lenght of 16 bytes

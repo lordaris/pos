@@ -53,13 +53,17 @@ func (app *application) createUser(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 		return
 	}
+	if err != mongo.ErrNoDocuments {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check for existing user"})
+		return
+	}
 
 	// Assign data from input to the user structure
 	user.Name = input.Name
 	user.Username = input.Username
 	user.RoleID = roleObjectID
 	user.Created = time.Now()
-	user.Tokens = []primitive.ObjectID{}
+	user.Tokens = []data.Token{}
 
 	// Set the user's password securely using the `SetPassword` method of the User struct (pointer)
 	err = user.SetPassword(input.Password)
