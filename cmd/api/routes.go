@@ -36,7 +36,7 @@ func Router(r *gin.Engine, app *application) {
 	r.PUT("/product/:barcode", app.updateProduct)
 
 	// Invoices
-	r.POST("/invoice", app.createInvoice)
+	r.POST("/invoice", app.authenticate(), app.createInvoice)
 
 	// TODO: Delete route. Used for testing purposes only.
 	{
@@ -45,4 +45,6 @@ func Router(r *gin.Engine, app *application) {
 			c.JSON(http.StatusOK, gin.H{"user": user})
 		})
 	}
+
+	r.POST("/inventory", app.authenticate(), app.createInventoryMovement)
 }

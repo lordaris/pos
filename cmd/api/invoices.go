@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net/http"
 	"time"
@@ -15,6 +16,12 @@ import (
 )
 
 func (app *application) createInvoice(c *gin.Context) {
+	user := app.contextGetUser(c)
+	if user == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
+
 	var input struct {
 		SaleDate time.Time `json:"sale_date"`
 		Items    []struct {
@@ -45,17 +52,17 @@ func (app *application) createInvoice(c *gin.Context) {
 	// adding that number to a physical ticket.
 	// Using transactions (with mongo.WithSession) allows to execute multiple operations as a single logical unit of work,
 	// and allow data consistency an integrity.
-	ticketNumber := 1
 	var invoiceInfo data.Invoice
-	err = mongo.WithSession(context.Background(), session, func(sc mongo.SessionContext) error {
+	_, err = session.WithTransaction(context.Background(), func(sc mongo.SessionContext) (interface{}, error) {
 		// Find the last ticket number
 		opts := options.FindOne().SetSort(bson.D{{"ticket_number", -1}})
 		var lastInvoice data.Invoice
 		err := invoiceCollection.FindOne(sc, bson.D{}, opts).Decode(&lastInvoice)
 		if err != nil && err != mongo.ErrNoDocuments {
-			return err
+			return nil, err
 		}
 
+		ticketNumber := 1
 		if err == nil {
 			ticketNumber = lastInvoice.TicketNumber + 1
 		}
@@ -69,10 +76,10 @@ func (app *application) createInvoice(c *gin.Context) {
 			if err != nil {
 				if err == mongo.ErrNoDocuments {
 					c.JSON(http.StatusNotFound, gin.H{"error": "Product not found"})
-					return nil // Return nil to abort the session without an error
+					return nil, fmt.Errorf("product not found")
 				}
 				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return nil // Return nil to abort the session without an error
+				return nil, err // Return nil to abort the session without an error
 			}
 
 			// Update product stock
@@ -80,7 +87,7 @@ func (app *application) createInvoice(c *gin.Context) {
 			_, err = productsCollection.UpdateOne(sc, filter, updateStock)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update product stock"})
-				return nil
+				return nil, fmt.Errorf("failed to update product stock")
 			}
 
 			price := product.Price
@@ -118,6 +125,8 @@ func (app *application) createInvoice(c *gin.Context) {
 			TotalAmount:  totalAmount,
 			SaleDate:     time.Now(),
 			Items:        make([]data.InvoiceItem, len(input.Items)),
+			UserID:       user.ID,
+			Username:     user.Name,
 		}
 
 		for i, item := range input.Items {
@@ -134,9 +143,9 @@ func (app *application) createInvoice(c *gin.Context) {
 		// Insert the new invoice
 		_, err = invoiceCollection.InsertOne(sc, invoice)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		return nil
+		return nil, nil
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

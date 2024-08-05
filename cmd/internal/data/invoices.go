@@ -15,6 +15,7 @@ type Invoice struct {
 	TicketNumber int                `bson:"ticket_number"`
 	TotalAmount  float64            `bson:"total_amount"`
 	UserID       primitive.ObjectID `bson:"user_id"`
+	Username     string             `bson:"username"`
 	CustomerID   primitive.ObjectID `bson:"customer_id,omitempty"`
 	SaleDate     time.Time          `bson:"sale_date"`
 	ChangeGiven  float64            `bson:"change_given"`

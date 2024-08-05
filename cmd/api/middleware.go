@@ -43,7 +43,7 @@ func (app *application) authenticate() gin.HandlerFunc {
 		tokenHash := sha256.Sum256([]byte(token))
 
 		// Get token document from the database.
-		usersCollection := app.config.db.mongoClient.Database("pos").Collection("user")
+		usersCollection := app.Collection(data.CollectionUser)
 
 		var user data.User
 		err := usersCollection.FindOne(c, bson.M{"tokens.hash": tokenHash[:]}).Decode(&user)
@@ -59,7 +59,9 @@ func (app *application) authenticate() gin.HandlerFunc {
 		}
 
 		// Remove expired tokens
+		// Get the actual time
 		currentTime := time.Now()
+		// Filter the valid tokens and create a new list of validTokens.
 		validTokens := user.Tokens[:0]
 		for _, token := range user.Tokens {
 			if token.Expiry.After(currentTime) {
@@ -67,6 +69,7 @@ func (app *application) authenticate() gin.HandlerFunc {
 			}
 		}
 
+		// If the length of valid tokens is different from the length of the original list of tokens (user.Tokens) is different, there were expired tokens, so the list of tokens is updated to show the new list of tokens.
 		if len(validTokens) != len(user.Tokens) {
 			_, err := usersCollection.UpdateOne(
 				c,
