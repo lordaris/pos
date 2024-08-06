@@ -33,7 +33,7 @@ go get -u github.com/gin-gonic/gin
 | POST   | "/promotion"        | productPromotion        | Done        |
 | PUT    | "/promotion/:id"    | updatePromotion         | Done        |
 | DELETE | "/promotion/:id"    | deletePromotion         | Done        |
-| POST   | "/inventory"        | createInventoryMovement | Not started |
+| POST   | "/inventory"        | createInventoryMovement | Done        |
 | PUT    | "/inventory/:id"    | updateInventoryMovement | Not started |
 | DELETE | "/inventory/:id"    | deleteInventoryMovement | Not started |
 | GET    | "/customer/:id"     | getCustomer             | Not started |
