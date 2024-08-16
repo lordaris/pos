@@ -106,6 +106,10 @@ func (app *application) createInvoice(c *gin.Context) {
 					productModule := item.Quantity % product.Promotion.GetQuantity
 					itemGetQuotient := int(item.Quantity / product.Promotion.GetQuantity)
 					paidProducts := (itemGetQuotient * product.Promotion.BuyQuantity) + productModule
+
+					// TODO: Use free products in the invoice. Generate an invoice containing the paid products
+					// and the free products as separate items.
+					//	freeProducts := item.Quantity - paidProducts
 					totalAmount += product.Price * float64(paidProducts)
 
 				}

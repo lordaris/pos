@@ -1,25 +1,33 @@
 TODO:
 
-- Continuar el invoice method,y recibir a fuerzas los datos como
-  el id del cajero. Además debe ir protegido con un middleware que permita solo el uso de roles de cajero, de gerente y de admin.
 - Crear un campo "modified" para actualización de usuarios
 
-- Crear un handler para los movimientos de inventario.
+- [ ] Crear una ruta para obtener un ticket por medio de su número de ticket.
 
-  - Ingresar un tipo de movimiento IN / OUT
-  - Recibir el ID del producto
-  - Buscar el barcode del producto
-  - Utilizar el middleware y el context
-    - Para registrar al usuario
+- [ ] Considerar el número de caja para la impresión del ticket
 
-- [x] Modificar el total del ticket para que solo regrese dos decimales.
+- [ ] Considerar tener un almacenamiento de inicios de sesión
 
-- [x] Invoice debe regresar los datos del ticket
+- [ ] Mandar desde los productos el descuento que se obtendría por una oferta (el buyget tiene una lógica especial).
 
-- [x] Validar que los tokens utilizados existan y estén activos. Si no, eliminarlos.
+- [ ] Ticket debe regresar el tipo de promoción por cada producto, precio regular y lo que corresponda segun el tipo de promoción:
 
-- [x] Modificar la estructura de tokens para almacenarla en la colección de usuarios
+  - Buyget:
+    - Precio regular
+    - Cantidad de productos pagados y su total
+    - Cantidad de productos regalados y su total igual a cero
+  - DiscountPercentage:
+    - Precio regular
+    - Porcentaje de descuento
+    - Precio con descuento
+    - Total con descuento
+  - DiscountPrice:
+    - Precio regular:
+    - Precio de descuento:
+    - Total con descuento.
 
-- [x] Modificar los handlers relacionados con tokens y el middleware, ya que estos buscan los tokens en una colección separada.
+- [ ] Considerar la eliminación de los permisos dentro de los roles y utilizar los puros roles para dar autorizaciones
 
--[x] Regresar el nombre de cada producto en el invoice.
+- [ ] Actualizar el API para agregar administración financiera.
+
+- [ ] Manejo de pedidos
