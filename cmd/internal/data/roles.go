@@ -7,7 +7,6 @@ const (
 )
 
 type Role struct {
-	ID          primitive.ObjectID `bson:"_id,omitempty"`
-	Name        string             `bson:"name"`
-	Permissions []string           `bson:"permissions"`
+	ID   primitive.ObjectID `bson:"_id,omitempty"`
+	Name string             `bson:"name"`
 }

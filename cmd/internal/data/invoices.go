@@ -25,10 +25,18 @@ type Invoice struct {
 }
 
 type InvoiceItem struct {
-	ProductName string  `bson:"product_name"`
-	Barcode     int     `bson:"barcode"`
-	Quantity    int     `bson:"quantity"`
-	Price       float64 `bson:"price"`
+	ProductName        string  `bson:"product_name"`
+	Barcode            int     `bson:"barcode"`
+	Quantity           int     `bson:"quantity"`
+	Price              float64 `bson:"price"`
+	PromotionType      string  `bson:"promotion_type"`
+	PaidQuantity       int     `bson:"paid_quantity"`
+	FreeQuantity       int     `bson:"free_quantity"`
+	DiscountPercentage int     `bson:"discount_percentage"`
+	PriceWithDiscount  float64 `bswon:"price_with_discount"`
+	DiscountPrice      float64 `bson:"discount_price"`
+
+	TotalAmount float64 `bson:"total_amount"`
 }
 
 type PaymentMethod struct {

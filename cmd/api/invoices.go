@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -69,7 +70,11 @@ func (app *application) createInvoice(c *gin.Context) {
 
 		// Calculate total amount considering promotions
 		var totalAmount float64
-		for i, item := range input.Items {
+
+		// Store the invoice items with its information
+		invoiceItems := make([]data.InvoiceItem, 0, len(input.Items))
+
+		for _, item := range input.Items {
 			var product data.Product
 			filter := bson.M{"barcode": item.Barcode}
 			err := productsCollection.FindOne(sc, filter).Decode(&product)
@@ -90,56 +95,57 @@ func (app *application) createInvoice(c *gin.Context) {
 				return nil, fmt.Errorf("failed to update product stock")
 			}
 
-			price := product.Price
-			if product.Promotion.StartDate.Before(time.Now()) && product.Promotion.EndDate.After(time.Now()) {
-				switch product.Promotion.Type {
-				case "DiscountPercentage":
-					price = price - (price * float64(product.Promotion.DiscountPercentage) / 100)
-					totalAmount = price * float64(item.Quantity)
-
-				case "DiscountPrice":
-					price = float64(product.Promotion.DiscountPrice)
-					totalAmount = price * float64(item.Quantity)
-
-				case "BuyGet":
-
-					productModule := item.Quantity % product.Promotion.GetQuantity
-					itemGetQuotient := int(item.Quantity / product.Promotion.GetQuantity)
-					paidProducts := (itemGetQuotient * product.Promotion.BuyQuantity) + productModule
-
-					// TODO: Use free products in the invoice. Generate an invoice containing the paid products
-					// and the free products as separate items.
-					//	freeProducts := item.Quantity - paidProducts
-					totalAmount += product.Price * float64(paidProducts)
-
-				}
-			} else {
-				totalAmount += price * float64(item.Quantity)
+			invoiceItem := data.InvoiceItem{
+				ProductName: product.Name,
+				Barcode:     product.Barcode,
+				Quantity:    item.Quantity,
+				Price:       product.Price,
 			}
 
-			input.Items[i].Price = product.Price
-			input.Items[i].ProductName = product.Name
+			if product.Promotion.StartDate.Before(time.Now()) && product.Promotion.EndDate.After(time.Now()) {
+				invoiceItem.PromotionType = product.Promotion.Type
+				switch product.Promotion.Type {
+				case "DiscountPercentage":
+					invoiceItem.PriceWithDiscount = math.Round((product.Price-(product.Price*float64(product.Promotion.DiscountPercentage)/100))*100) / 100
+					invoiceItem.DiscountPercentage = product.Promotion.DiscountPercentage
+					invoiceItem.TotalAmount = invoiceItem.PriceWithDiscount * float64(item.Quantity)
+					totalAmount += float64(invoiceItem.TotalAmount)
+
+				case "DiscountPrice":
+					invoiceItem.DiscountPrice = float64(product.Promotion.DiscountPrice)
+					invoiceItem.TotalAmount = invoiceItem.DiscountPrice * float64(item.Quantity)
+					totalAmount += invoiceItem.TotalAmount
+
+				case "BuyGet":
+					productModule := item.Quantity % product.Promotion.GetQuantity
+					itemGetQuotient := int(item.Quantity / product.Promotion.GetQuantity)
+					invoiceItem.PaidQuantity = (itemGetQuotient * product.Promotion.BuyQuantity) + productModule
+					invoiceItem.FreeQuantity = item.Quantity - invoiceItem.PaidQuantity
+					invoiceItem.TotalAmount = product.Price * float64(invoiceItem.PaidQuantity)
+
+					totalAmount += invoiceItem.TotalAmount
+				}
+			} else {
+				invoiceItem.TotalAmount = product.Price * float64(item.Quantity)
+				totalAmount += invoiceItem.TotalAmount
+
+			}
+
+			invoiceItems = append(invoiceItems, invoiceItem)
+
 		}
 
 		totalAmount = math.Round(totalAmount*100) / 100
+
 		// Create the invoice object
 		invoice := &data.Invoice{
 			ID:           primitive.NewObjectID(),
 			TicketNumber: ticketNumber,
 			TotalAmount:  totalAmount,
 			SaleDate:     time.Now(),
-			Items:        make([]data.InvoiceItem, len(input.Items)),
+			Items:        invoiceItems,
 			UserID:       user.ID,
 			Username:     user.Name,
-		}
-
-		for i, item := range input.Items {
-			invoice.Items[i] = data.InvoiceItem{
-				ProductName: item.ProductName,
-				Barcode:     item.Barcode,
-				Quantity:    item.Quantity,
-				Price:       item.Price,
-			}
 		}
 
 		invoiceInfo = *invoice
@@ -157,4 +163,27 @@ func (app *application) createInvoice(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"invoice": invoiceInfo})
+}
+
+func (app *application) getInvoice(c *gin.Context) {
+	ticketNumberStr := c.Param("ticketnumber")
+	ticketNumber, err := strconv.Atoi(ticketNumberStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ticket number"})
+	}
+
+	invoicesCollection := app.Collection(data.CollectionInvoice)
+	filter := bson.D{{"ticket_number", ticketNumber}}
+	var existingInvoice data.Invoice
+	err = invoicesCollection.FindOne(context.TODO(), filter).Decode(&existingInvoice)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Ticket not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Ticket": existingInvoice})
 }

@@ -37,6 +37,7 @@ func Router(r *gin.Engine, app *application) {
 
 	// Invoices
 	r.POST("/invoice", app.authenticate(), app.createInvoice)
+	r.GET("/invoice/:ticketnumber", app.getInvoice)
 
 	// TODO: Delete route. Used for testing purposes only.
 	{
@@ -46,5 +47,5 @@ func Router(r *gin.Engine, app *application) {
 		})
 	}
 
-	r.POST("/inventory", app.authenticate(), app.createInventoryMovement)
+	r.POST("/inventory", app.authenticate(), app.allowRole("admin", "manager"), app.createInventoryMovement)
 }

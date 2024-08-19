@@ -7,13 +7,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/lordaris/pos-api/cmd/internal/data"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (app *application) createRoles(c *gin.Context) {
-	rolesCollection := app.Collection(data.CollectionRole)
-	var roles []data.Role
+	var roles struct {
+		Name string `json:"name"`
+	}
 
 	// Bind the JSON body from the request to the `roles` slice
 	if err := c.ShouldBindJSON(&roles); err != nil {
@@ -21,30 +20,23 @@ func (app *application) createRoles(c *gin.Context) {
 		return
 	}
 
-	// Iterate over each role and perform upsert operation
-	for _, role := range roles {
-		filter := bson.M{"name": role.Name}
-		update := bson.M{
-			"$set": bson.M{
-				"permissions": role.Permissions,
-			},
-		}
-
-		opts := options.Update().SetUpsert(true)
-		_, err := rolesCollection.UpdateOne(context.TODO(), filter, update, opts)
-		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				_, err := rolesCollection.InsertOne(context.TODO(), role)
-				if err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create role: " + role.Name})
-					return
-				}
-			} else {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update role: " + role.Name})
-				return
-			}
-		}
+	rolesCollection := app.Collection(data.CollectionRole)
+	var existingRole data.Role
+	err := rolesCollection.FindOne(context.TODO(), bson.M{"name": roles.Name}).Decode(&existingRole)
+	if err == nil {
+		c.JSON(http.StatusConflict, gin.H{"error": "Role already exists", "Role": existingRole.Name})
+		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Roles created/updated successfully"})
+	roleData := &data.Role{
+		Name: roles.Name,
+	}
+
+	_, err = rolesCollection.InsertOne(context.TODO(), roleData)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": roleData})
 }

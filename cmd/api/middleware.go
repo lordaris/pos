@@ -90,3 +90,43 @@ func (app *application) authenticate() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func (app *application) allowRole(allowedRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := app.contextGetUser(c)
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "authorization required"})
+			c.Abort()
+			return
+		}
+
+		rolesCollection := app.Collection(data.CollectionRole)
+		var roleInfo data.Role
+		err := rolesCollection.FindOne(c, bson.M{"_id": user.RoleID}).Decode(&roleInfo)
+		if err != nil {
+			if errors.Is(err, mongo.ErrNoDocuments) {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid role ID "})
+				c.Abort()
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve role"})
+			c.Abort()
+			return
+		}
+
+		allowed := false
+		for _, role := range allowedRoles {
+			if roleInfo.Name == role {
+				allowed = true
+				break
+			}
+		}
+
+		if !allowed {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "You don't have permission to use this "})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
