@@ -1,51 +1,78 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 )
 
 func Router(r *gin.Engine, app *application) {
-	// r.GET("/", func(c *gin.Context) {
-	// 	c.JSON(200, gin.H{
-	// 		"message": "Hello world",
-	// 	})
-	// })
+	// Create a base router group that applies authentication and logging to all routes
+	base := r.Group("/")
+	base.Use(app.authenticate())
 
-	// Users and roles
-	r.POST("/user", app.createUser)
-	r.GET("/user/:id", app.getUser)
-	r.GET("/users/:role", app.getUsersByRole)
-	r.PUT("/user/:id", app.updateUser)
-	r.PUT("/user/:id/role", app.updateUserRole)
-	r.POST("/roles", app.createRoles)
-	r.DELETE("/user/:id", app.deleteUser)
-	r.POST("/tokens/authentication", app.createAuthenticationToken)
-	// Products and categories
-	r.POST("/product", app.createProduct)
-	r.POST("/category", app.createCategory)
-	r.GET("/categories", app.getCategories)
-	r.PUT("/category/:id", app.updateCategory)
-	r.DELETE("/category/:id", app.deleteCategory)
-	r.POST("/promotion", app.productPromotion)
-	r.GET("/promotion/:barcode", app.getPromotion)
-	r.PUT("/promotion/:barcode", app.updatePromotion)
-	r.GET("/product/:barcode", app.getProduct)
-	r.DELETE("/product/:barcode", app.deleteProduct)
-	r.PUT("/product/:barcode", app.updateProduct)
-
-	// Invoices
-	r.POST("/invoice", app.authenticate(), app.createInvoice)
-	r.GET("/invoice/:ticketnumber", app.getInvoice)
-
-	// TODO: Delete route. Used for testing purposes only.
+	// Users and roles routes
+	users := base.Group("/user")
 	{
-		r.GET("/test", app.authenticate(), func(c *gin.Context) {
-			user := app.contextGetUser(c)
-			c.JSON(http.StatusOK, gin.H{"user": user})
-		})
+		users.POST("", app.allowRole("manager", "admin", "hr"), app.loggerMiddleware(), app.createUser)             // Create a new user
+		users.GET("/:id", app.allowRole("manager"), app.getUser)                                                    // Get a specific user by ID
+		users.GET("/role/:role", app.getUsersByRole)                                                                // Get users by role
+		users.PUT("/:id", app.allowRole("manager", "admin", "hr"), app.loggerMiddleware(), app.updateUser)          // Update a user's information
+		users.PUT("/:id/role", app.allowRole("manager", "admin", "hr"), app.loggerMiddleware(), app.updateUserRole) // Update a user's role
+		users.DELETE("/:id", app.allowRole("manager", "admin", "hr"), app.loggerMiddleware(), app.deleteUser)       // Delete a user
 	}
 
-	r.POST("/inventory", app.authenticate(), app.allowRole("admin", "manager"), app.createInventoryMovement)
+	// Roles routes
+	roles := base.Group("/roles")
+	{
+		roles.POST("", app.allowRole("manager", "admin", "hr"), app.loggerMiddleware(), app.createRoles) // Create new roles
+		roles.GET("", app.getAllRoles)                                                                   // Get all roles
+	}
+
+	// Authentication routes
+	r.POST("/auth/token", app.createAuthenticationToken) // Create an stateless authentication token
+
+	// Products routes
+	products := base.Group("/products")
+	{
+		products.POST("", app.allowRole("admin", "manager", "price_checker"), app.loggerMiddleware(), app.createProduct)            // Create a new product
+		products.PUT("/:barcode", app.allowRole("admin", "manager", "price_checker"), app.loggerMiddleware(), app.updateProduct)    // Update a product
+		products.DELETE("/:barcode", app.allowRole("admin", "manager", "price_checker"), app.loggerMiddleware(), app.deleteProduct) // Delete a product
+	}
+
+	r.GET("/products/:barcode", app.getProduct) // Get a product by barcode
+
+	// Categories routes
+	categories := base.Group("/categories")
+	{
+		categories.POST("", app.allowRole("admin", "manager", "price_checker"), app.loggerMiddleware(), app.createCategory)       // Create a new category
+		categories.PUT("/:id", app.allowRole("admin", "manager", "price_checker"), app.loggerMiddleware(), app.updateCategory)    // Update a category
+		categories.DELETE("/:id", app.allowRole("admin", "manager", "price_checker"), app.loggerMiddleware(), app.deleteCategory) // Delete a category
+	}
+
+	r.GET("/categories", app.getCategories) // Get all categories
+
+	// Promotions routes
+	promotions := base.Group("/promotions")
+	{
+		promotions.POST("", app.allowRole("admin", "manager", "price_checker"), app.loggerMiddleware(), app.productPromotion)        // Create a new promotion
+		promotions.PUT("/:barcode", app.allowRole("admin", "manager", "price_checker"), app.loggerMiddleware(), app.updatePromotion) // Update a promotion
+	}
+
+	r.GET("/promotions/:barcode", app.getPromotion) // Get a promotion by product barcode
+
+	// Invoices routes
+	invoices := base.Group("/invoices")
+	{
+		invoices.POST("", app.createInvoice)           // Create a new invoice
+		invoices.GET("/:ticketnumber", app.getInvoice) // Get an invoice by ticket number
+	}
+
+	// Inventory routes
+	inventory := base.Group("/inventory")
+	{
+		// Apply additional middleware for admin/manager roles
+		inventory.Use(app.allowRole("admin", "manager"))
+		inventory.POST("", app.createInventoryMovement) // Create an inventory movement
+	}
+
+	r.GET("/sales/:startdate/:enddate", app.getSales)
 }

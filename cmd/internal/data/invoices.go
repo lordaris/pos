@@ -13,7 +13,7 @@ const (
 type Invoice struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`
 	TicketNumber int                `bson:"ticket_number"`
-	TotalAmount  float64            `bson:"total_amount"`
+	TicketTotal  float64            `bson:"ticket_total"`
 	UserID       primitive.ObjectID `bson:"user_id"`
 	Username     string             `bson:"username"`
 	CustomerID   primitive.ObjectID `bson:"customer_id,omitempty"`

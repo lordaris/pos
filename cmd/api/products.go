@@ -13,8 +13,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// TODO: Refactor code to make it modular.
-
 func (app *application) createProduct(c *gin.Context) {
 	var input struct {
 		Name        string  `json:"name"`
@@ -92,6 +90,7 @@ func (app *application) getProduct(c *gin.Context) {
 
 	productsCollection := app.Collection(data.CollectionProduct)
 	filter := bson.D{{"barcode", barcode}}
+
 	var existingProduct data.Product
 	err = productsCollection.FindOne(context.TODO(), filter).Decode(&existingProduct)
 	if err != nil {

@@ -1,6 +1,11 @@
 package data
 
-import "go.mongodb.org/mongo-driver/bson/primitive"
+import (
+	"reflect"
+
+	"github.com/lordaris/pos-api/cmd/internal/validator"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 const (
 	CollectionProduct = "products"
@@ -17,4 +22,11 @@ type Product struct {
 	Barcode     int                `bson:"barcode"`
 	CategoryID  primitive.ObjectID `bson:"category_id"`
 	Promotion   Promotion          `bson:"promotion"`
+}
+
+func validatePoduct(v *validator.Validator, product *Product) {
+	v.Check(product.Name != "", "name", "must be provided")
+	v.Check(product.Brand != "", "brand", "must be provided")
+	v.Check(product.Description != "", "description", "must be provided")
+	v.Check(reflect.TypeOf(product.Price).Kind() == reflect.Float64, "price", "must be a float64")
 }

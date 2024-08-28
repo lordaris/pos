@@ -32,11 +32,38 @@ func (app *application) createRoles(c *gin.Context) {
 		Name: roles.Name,
 	}
 
-	_, err = rolesCollection.InsertOne(context.TODO(), roleData)
+	result, err := rolesCollection.InsertOne(context.TODO(), roleData)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": roleData})
+	c.JSON(http.StatusCreated, gin.H{"ID": result.InsertedID, "Name": roleData.Name})
+}
+
+func (app *application) getAllRoles(c *gin.Context) {
+	rolesCollection := app.Collection(data.CollectionRole)
+	cursor, err := rolesCollection.Find(context.TODO(), bson.M{})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error fetching roles"})
+		return
+	}
+
+	var roles []data.Role
+
+	for cursor.Next(context.TODO()) {
+		var role data.Role
+		if err := cursor.Decode(&role); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error decoding roles"})
+			return
+		}
+		roles = append(roles, role)
+	}
+
+	if err := cursor.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Cursor error: " + err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"roles": roles})
 }

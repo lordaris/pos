@@ -69,7 +69,7 @@ func (app *application) createInvoice(c *gin.Context) {
 		}
 
 		// Calculate total amount considering promotions
-		var totalAmount float64
+		var ticketTotal float64
 
 		// Store the invoice items with its information
 		invoiceItems := make([]data.InvoiceItem, 0, len(input.Items))
@@ -109,12 +109,12 @@ func (app *application) createInvoice(c *gin.Context) {
 					invoiceItem.PriceWithDiscount = math.Round((product.Price-(product.Price*float64(product.Promotion.DiscountPercentage)/100))*100) / 100
 					invoiceItem.DiscountPercentage = product.Promotion.DiscountPercentage
 					invoiceItem.TotalAmount = invoiceItem.PriceWithDiscount * float64(item.Quantity)
-					totalAmount += float64(invoiceItem.TotalAmount)
+					ticketTotal += float64(invoiceItem.TotalAmount)
 
 				case "DiscountPrice":
 					invoiceItem.DiscountPrice = float64(product.Promotion.DiscountPrice)
 					invoiceItem.TotalAmount = invoiceItem.DiscountPrice * float64(item.Quantity)
-					totalAmount += invoiceItem.TotalAmount
+					ticketTotal += invoiceItem.TotalAmount
 
 				case "BuyGet":
 					productModule := item.Quantity % product.Promotion.GetQuantity
@@ -123,11 +123,11 @@ func (app *application) createInvoice(c *gin.Context) {
 					invoiceItem.FreeQuantity = item.Quantity - invoiceItem.PaidQuantity
 					invoiceItem.TotalAmount = product.Price * float64(invoiceItem.PaidQuantity)
 
-					totalAmount += invoiceItem.TotalAmount
+					ticketTotal += invoiceItem.TotalAmount
 				}
 			} else {
 				invoiceItem.TotalAmount = product.Price * float64(item.Quantity)
-				totalAmount += invoiceItem.TotalAmount
+				ticketTotal += invoiceItem.TotalAmount
 
 			}
 
@@ -135,13 +135,13 @@ func (app *application) createInvoice(c *gin.Context) {
 
 		}
 
-		totalAmount = math.Round(totalAmount*100) / 100
+		ticketTotal = math.Round(ticketTotal*100) / 100
 
 		// Create the invoice object
 		invoice := &data.Invoice{
 			ID:           primitive.NewObjectID(),
 			TicketNumber: ticketNumber,
-			TotalAmount:  totalAmount,
+			TicketTotal:  ticketTotal,
 			SaleDate:     time.Now(),
 			Items:        invoiceItems,
 			UserID:       user.ID,
